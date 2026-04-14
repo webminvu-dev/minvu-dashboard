@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MINVU · Social Media Dashboard 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ─── RESET ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #f1f5f9;
+  --card:     #ffffff;
+  --card2:    #f8fafc;
+  --border:   #e2e8f0;
+  --border2:  #cbd5e1;
+  --text:     #0f172a;
+  --text2:    #334155;
+  --muted:    #94a3b8;
+  --muted2:   #64748b;
+  --accent:   #2563eb;
+  --acc-bg:   #eff6ff;
+  --green:    #16a34a; --green-bg: #f0fdf4;
+  --red:      #dc2626; --red-bg:   #fef2f2;
+  --amber:    #d97706; --amb-bg:   #fffbeb;
+  --ig: #e1306c; --fb: #1877f2; --tt: #00b2a9; --xc: #374151;
+  --dash: #7c3aed;
+  --font: 'Inter', system-ui, sans-serif;
+  --r: 10px; --rl: 14px;
+  --sh:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --sh2: 0 4px 16px rgba(0,0,0,.08);
+}
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.shell { display: flex; min-height: 100vh; }
+
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+.sidebar {
+  width: 228px; flex-shrink: 0; background: var(--card);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; overflow-y: auto;
+}
+.sb-logo { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); }
+.sb-logo-inner { display: flex; align-items: center; gap: 10px; }
+.sb-icon { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sb-name { font-weight: 700; font-size: 14px; color: var(--text); letter-spacing: -.01em; line-height: 1.2; }
+.sb-sub  { font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+.sb-section { padding: 4px 10px; margin-top: 4px; }
+.sb-sec-lbl { display: block; font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; padding: 5px 8px 7px; }
+.nav-btn { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; border: none; background: none; text-align: left; transition: background .12s, color .12s; margin-bottom: 1px; }
+.nav-btn:hover { background: var(--bg); color: var(--text); }
+.nav-btn.active { font-weight: 600; }
+.nav-btn[data-tab="dashboard"].active { background: #f5f3ff; color: var(--dash); }
+.nav-btn[data-tab="instagram"].active { background: #fff0f6; color: var(--ig); }
+.nav-btn[data-tab="facebook"].active  { background: #eff6ff; color: var(--fb); }
+.nav-btn[data-tab="tiktok"].active    { background: #f0fdfa; color: var(--tt); }
+.nav-btn[data-tab="x"].active         { background: #f8fafc; color: var(--xc); }
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; opacity: .9; }
+.nav-btn[data-tab="dashboard"] .nav-dot { background: var(--dash); }
+.nav-btn[data-tab="instagram"] .nav-dot { background: var(--ig); }
+.nav-btn[data-tab="facebook"]  .nav-dot { background: var(--fb); }
+.nav-btn[data-tab="tiktok"]    .nav-dot { background: var(--tt); }
+.nav-btn[data-tab="x"]         .nav-dot { background: #9ca3af; }
+
+/* Sub-menu for KPIs inside sidebar */
+.nav-sub { display: none; padding-left: 26px; margin-bottom: 4px; }
+.nav-sub.open { display: block; }
+.nav-sub-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 12px; color: var(--muted2); cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all .12s; }
+.nav-sub-item:hover { background: var(--bg); color: var(--text2); }
+.nav-sub-item.active { color: var(--accent); font-weight: 600; background: var(--acc-bg); }
+.nav-sub-item::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; opacity: .5; }
+.nav-chevron { margin-left: auto; font-size: 10px; transition: transform .2s; color: var(--muted); }
+.nav-btn.open .nav-chevron { transform: rotate(90deg); }
+
+.sb-footer { margin-top: auto; padding: 12px 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.5; }
+.sb-year { display: inline-block; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: var(--muted2); margin-top: 4px; }
+
+/* ─── MAIN ───────────────────────────────────────────────── */
+.main { margin-left: 228px; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 26px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40; }
+.tb-bc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.tb-bc .cur { color: var(--text); font-weight: 600; }
+.tb-bc .sep { color: var(--border2); }
+.tb-right { display: flex; align-items: center; gap: 8px; }
+.unsaved-pill { display: none; background: var(--amb-bg); border: 1px solid #fde68a; color: var(--amber); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; align-items: center; gap: 4px; }
+.unsaved-pill.show { display: flex; }
+.content { padding: 22px 26px; flex: 1; }
+
+/* ─── PAGES ──────────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; animation: fadeup .18s ease; }
+@keyframes fadeup { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+/* ─── PAGE HEADER ────────────────────────────────────────── */
+.ph { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+.ph-title { font-size: 19px; font-weight: 700; color: var(--text); letter-spacing: -.02em; }
+.ph-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ph-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ─── SECTION LABEL ──────────────────────────────────────── */
+.slabel { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin: 18px 0 10px; }
+
+/* ─── KPI SUMMARY CARDS ──────────────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 4px; }
+@media (max-width:900px) { .kpi-row { grid-template-columns: repeat(2,1fr); } }
+.kc { background: var(--card); border: 1px solid var(--border); border-radius: var(--rl); padding: 15px 16px; box-shadow: var(--sh); transition: box-shadow .15s, transform .15s; }
+.kc:hover { box-shadow: var(--sh2); transform: translateY(-1px); }
+.kc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.kc-lbl { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.kc-ico { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.kc-val { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -.03em; line-height: 1; margin-bottom: 6px; }
+.kc-meta { display: flex; align-items: center; gap: 6px; }
+.kc-badge { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+.kc-badge.up { background: var(--green-bg); color: var(--green); }
+.kc-badge.dn { background: var(--red-bg);   color: var(--red); }
+.kc-badge.fl { background: var(--bg);        color: var(--muted); }
+.kc-period { font-size: 11px; color: var(--muted); }
+
+/* ─── CHARTS GRID ────────────────────────────────────────── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+.g1 { display: grid; grid-template-columns: 1fr;     gap: 14px; margin-bottom: 4px; }
+@media (max-width:800px) { .g2 { grid-template-columns: 1fr; } }
+.cc { background: var(--card); border: 1px solid var(--border); border-radius: var(--rl); padding: 16px 18px; box-shadow: var(--sh); }
+.cc-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 13px; }
+.cc-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.cc-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.cw { position: relative; }
+
+/* ─── KPI ACCORDION SECTION ──────────────────────────────── */
+.kpi-accordion { margin-bottom: 6px; }
+.kpi-acc-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--rl); margin-bottom: 8px; overflow: hidden; box-shadow: var(--sh); }
+.kpi-acc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; cursor: pointer; user-select: none;
+  transition: background .12s;
+}
+.kpi-acc-header:hover { background: var(--bg); }
+.kpi-acc-header.open { border-bottom: 1px solid var(--border); }
+.kpi-acc-left { display: flex; align-items: center; gap: 10px; }
+.kpi-acc-num { width: 22px; height: 22px; border-radius: 6px; background: var(--acc-bg); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi-acc-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.kpi-acc-desc { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.kpi-acc-summary { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.kpi-acc-val { font-weight: 700; color: var(--text); font-size: 13px; }
+.kpi-acc-chg { font-size: 11px; font-weight: 600; }
+.kpi-acc-chg.up { color: var(--green); }
+.kpi-acc-chg.dn { color: var(--red); }
+.kpi-acc-chg.fl { color: var(--muted); }
+.kpi-acc-arrow { color: var(--muted); font-size: 11px; transition: transform .2s; flex-shrink: 0; }
+.kpi-acc-header.open .kpi-acc-arrow { transform: rotate(90deg); }
+.kpi-acc-body { display: none; padding: 0; }
+.kpi-acc-body.open { display: block; }
+
+/* ─── DATA TABLE ─────────────────────────────────────────── */
+table.dt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.dt th { padding: 8px 14px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--card2); border-bottom: 1px solid var(--border); }
+table.dt td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+table.dt tr:last-child td { border-bottom: none; }
+table.dt tbody tr:hover td { background: #fafbfc; }
+.cm { color: var(--muted2); font-size: 12px; }
+.cv { font-weight: 600; color: var(--text); font-size: 13px; }
+.tr-tot td { background: var(--card2) !important; font-weight: 700; border-top: 1px solid var(--border2) !important; }
+.vu { color: var(--green); font-size: 11.5px; font-weight: 500; }
+.vd { color: var(--red);   font-size: 11.5px; font-weight: 500; }
+.vf { color: var(--muted); font-size: 11.5px; }
+
+/* ─── EDITABLE INPUT ─────────────────────────────────────── */
+.ei { background: transparent; border: 1px solid transparent; outline: none; color: var(--text); font-family: var(--font); font-weight: 600; font-size: 13px; width: 130px; padding: 3px 7px; border-radius: 5px; transition: all .12s; }
+.ei:hover { border-color: var(--border2); background: var(--bg); }
+.ei:focus { border-color: var(--accent); background: var(--acc-bg); color: var(--accent); }
+
+/* ─── STATUS PILLS ───────────────────────────────────────── */
+.pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 600; }
+.pill-ok { background: var(--green-bg); color: var(--green); }
+.pill-wn { background: var(--amb-bg);   color: var(--amber); }
+.pill-bd { background: var(--red-bg);   color: var(--red); }
+.pill-no { background: var(--bg);        color: var(--muted); }
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: var(--font); transition: all .14s; }
+.btn-p { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-p:hover { background: #1d4ed8; }
+.btn-g { background: var(--card); border-color: var(--border2); color: var(--text2); }
+.btn-g:hover { background: var(--bg); }
+.btn-ai { background: #f5f3ff; border-color: #ddd6fe; color: var(--dash); font-weight: 600; }
+.btn-ai:hover { background: #ede9fe; }
+.sp { width: 13px; height: 13px; border: 2px solid #c4b5fd; border-top-color: var(--dash); border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+.btn-ai.loading .ai-ico { display: none; }
+.btn-ai.loading .sp { display: inline-block; }
+.btn:disabled { opacity: .5; pointer-events: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── MONTH SELECT ───────────────────────────────────────── */
+.msel { background: var(--card); border: 1px solid var(--border2); color: var(--text); padding: 7px 28px 7px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 500; cursor: pointer; outline: none; font-family: var(--font); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center; }
+.msel:focus { border-color: var(--accent); }
+
+/* ─── DASHBOARD NETWORK CARDS ────────────────────────────── */
+.dash-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+@media (max-width:900px) { .dash-grid { grid-template-columns: repeat(2,1fr); } }
+.dnc { background: var(--card); border: 1px solid var(--border); border-radius: var(--rl); padding: 14px 15px; box-shadow: var(--sh); border-top: 3px solid transparent; }
+.dnc.ig { border-top-color: var(--ig); }
+.dnc.fb { border-top-color: var(--fb); }
+.dnc.tt { border-top-color: var(--tt); }
+.dnc.x  { border-top-color: #94a3b8; }
+.dnc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.dnc-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.dnc-ico.ig { background: #fff0f6; color: var(--ig); }
+.dnc-ico.fb { background: #eff6ff; color: var(--fb); }
+.dnc-ico.tt { background: #f0fdfa; color: var(--tt); }
+.dnc-ico.x  { background: #f8fafc; color: var(--xc); }
+.dnc-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.dnc-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.dkpi-lbl { font-size: 9.5px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+.dkpi-val { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.02em; margin-top: 1px; }
+.dkpi-chg { font-size: 10.5px; font-weight: 500; margin-top: 1px; }
+.dkpi-chg.up { color: var(--green); }
+.dkpi-chg.dn { color: var(--red); }
+.dkpi-chg.fl { color: var(--muted); }
+
+/* ─── AI PANEL ───────────────────────────────────────────── */
+.ai-panel { display: none; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: var(--rl); padding: 14px 18px; margin-bottom: 4px; }
+.ai-panel.vis { display: block; animation: fadeup .25s ease; }
+.aip-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--dash); }
+.aip-body { font-size: 13px; line-height: 1.72; color: var(--text2); white-space: pre-wrap; }
+.aip-foot { margin-top: 7px; font-size: 10.5px; color: #a78bfa; }
+.ai-err { color: var(--red); font-size: 12px; }
+
+/* ─── SAVE BAR ───────────────────────────────────────────── */
+.save-bar { position: fixed; bottom: 22px; right: 24px; z-index: 200; display: flex; gap: 8px; opacity: 0; pointer-events: none; transform: translateY(8px); transition: all .22s; }
+.save-bar.vis { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+/* ─── TOAST ──────────────────────────────────────────────── */
+.toast { position: fixed; bottom: 72px; right: 24px; z-index: 300; background: var(--text); color: #fff; border-radius: 8px; padding: 9px 15px; font-size: 12.5px; font-weight: 500; opacity: 0; transform: translateY(5px); transition: all .22s; pointer-events: none; }
+.toast.show { opacity: 1; transform: none; }
+.toast.ok  { background: var(--green); }
+.toast.err { background: var(--red); }
+
+/* ─── TREND GRID ─────────────────────────────────────────── */
+.tg { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width:800px) { .tg { grid-template-columns: 1fr; } }
+
+/* ─── MOBILE ─────────────────────────────────────────────── */
+@media (max-width:700px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .mob-nav { display: flex !important; overflow-x: auto; scrollbar-width: none; gap: 4px; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
+  .mob-nav::-webkit-scrollbar { display: none; }
+  .mob-nav .nav-btn { flex-shrink: 0; padding: 6px 11px; font-size: 12px; }
+  .content { padding: 14px; }
+  .dash-grid, .kpi-row { grid-template-columns: 1fr 1fr; }
+  .g2, .tg { grid-template-columns: 1fr; }
+}
+.mob-nav { display: none; }
+
+/* ─── DASHBOARD EXTRA SECTIONS ──────────────────────────── */
+/* Smart metrics row */
+.smart-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:4px; }
+@media(max-width:900px){ .smart-row { grid-template-columns:1fr 1fr; } }
+@media(max-width:520px){ .smart-row { grid-template-columns:1fr; } }
+.smart-card { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); padding:14px 16px; box-shadow:var(--sh); display:flex; align-items:center; gap:14px; }
+.smart-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.smart-icon.trophy  { background:#fef9c3; }
+.smart-icon.engage  { background:#f0fdf4; }
+.smart-icon.growth  { background:#eff6ff; }
+.smart-label { font-size:10.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+.smart-value { font-size:20px; font-weight:700; color:var(--text); letter-spacing:-.02em; margin:2px 0; }
+.smart-sub   { font-size:11px; color:var(--muted2); }
+
+/* Alerts panel */
+.alerts-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); overflow:hidden; box-shadow:var(--sh); margin-bottom:4px; }
+.alerts-header { padding:11px 16px; background:var(--card2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.alerts-header-title { font-size:12px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:7px; }
+.alerts-badge { background:var(--red-bg); color:var(--red); font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px; }
+.alerts-badge.ok { background:var(--green-bg); color:var(--green); }
+.alerts-empty { padding:14px 16px; font-size:12px; color:var(--muted); text-align:center; }
+.alert-item { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border); }
+.alert-item:last-child { border-bottom:none; }
+.alert-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.alert-dot.red    { background:var(--red); }
+.alert-dot.amber  { background:var(--amber); }
+.alert-dot.green  { background:var(--green); }
+.alert-net { font-size:10.5px; font-weight:700; min-width:70px; }
+.alert-net.ig { color:var(--ig); }
+.alert-net.fb { color:var(--fb); }
+.alert-net.tt { color:var(--tt); }
+.alert-net.x  { color:var(--xc); }
+.alert-kpi   { font-size:12px; color:var(--text2); flex:1; }
+.alert-val   { font-size:11.5px; font-weight:600; }
+.alert-val.red   { color:var(--red); }
+.alert-val.amber { color:var(--amber); }
+.alert-val.green { color:var(--green); }
+
+/* Community totals row */
+.totals-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:4px; }
+@media(max-width:900px){ .totals-row { grid-template-columns:repeat(2,1fr); } }
+.total-card { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); padding:13px 15px; box-shadow:var(--sh); border-left:3px solid transparent; }
+.total-card.ig { border-left-color:var(--ig); }
+.total-card.fb { border-left-color:var(--fb); }
+.total-card.tt { border-left-color:var(--tt); }
+.total-card.x  { border-left-color:#94a3b8; }
+.total-card-label { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+.total-card-value { font-size:22px; font-weight:700; color:var(--text); letter-spacing:-.03em; }
+.total-card-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* Goals row */
+.goals-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:4px; }
+@media(max-width:900px){ .goals-grid { grid-template-columns:repeat(2,1fr); } }
+.goal-card { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); padding:13px 15px; box-shadow:var(--sh); }
+.goal-card-net { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+.goal-card-net.ig { color:var(--ig); }
+.goal-card-net.fb { color:var(--fb); }
+.goal-card-net.tt { color:var(--tt); }
+.goal-card-net.x  { color:var(--xc); }
+.goal-kpi-row { display:flex; align-items:center; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border); }
+.goal-kpi-row:last-child { border-bottom:none; }
+.goal-kpi-name { font-size:11px; color:var(--muted2); }
+.goal-input { background:transparent; border:1px solid transparent; outline:none; color:var(--text); font-family:var(--font); font-weight:600; font-size:12px; width:90px; padding:2px 5px; border-radius:4px; text-align:right; transition:all .12s; }
+.goal-input:hover { border-color:var(--border2); background:var(--bg); }
+.goal-input:focus { border-color:var(--accent); background:var(--acc-bg); color:var(--accent); }
+
+/* Progress bar inside kpi cards */
+.goal-progress-wrap { margin-top:5px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+.goal-progress-bar  { height:100%; border-radius:2px; transition:width .4s ease; }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-inner">
+      <div class="sb-icon">MV</div>
+      <div><div class="sb-name">MINVU</div><div class="sb-sub">Redes Sociales 2026</div></div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <span class="sb-sec-lbl">General</span>
+    <button class="nav-btn active" data-tab="dashboard">
+      <span class="nav-dot"></span>Dashboard
+    </button>
+  </div>
+
+  <div class="sb-section">
+    <span class="sb-sec-lbl">Plataformas</span>
+
+    <!-- Each network nav: main button + sub-items -->
+    <button class="nav-btn" data-tab="instagram">
+      <span class="nav-dot"></span>Instagram
+      <span class="nav-chevron">›</span>
+    </button>
+    <div class="nav-sub" id="sub-instagram"></div>
+
+    <button class="nav-btn" data-tab="facebook">
+      <span class="nav-dot"></span>Facebook
+      <span class="nav-chevron">›</span>
+    </button>
+    <div class="nav-sub" id="sub-facebook"></div>
+
+    <button class="nav-btn" data-tab="tiktok">
+      <span class="nav-dot"></span>TikTok
+      <span class="nav-chevron">›</span>
+    </button>
+    <div class="nav-sub" id="sub-tiktok"></div>
+
+    <button class="nav-btn" data-tab="x">
+      <span class="nav-dot"></span>X
+      <span class="nav-chevron">›</span>
+    </button>
+    <div class="nav-sub" id="sub-x"></div>
+  </div>
+
+  <div class="sb-footer">
+    Ministerio de Vivienda<br>y Urbanismo — Chile
+    <div class="sb-year">2026</div>
+  </div>
+</aside>
+
+<!-- MOBILE NAV -->
+<div class="mob-nav" id="mobNav">
+  <button class="nav-btn active" data-tab="dashboard"><span class="nav-dot"></span>Dashboard</button>
+  <button class="nav-btn" data-tab="instagram"><span class="nav-dot"></span>Instagram</button>
+  <button class="nav-btn" data-tab="facebook"><span class="nav-dot"></span>Facebook</button>
+  <button class="nav-btn" data-tab="tiktok"><span class="nav-dot"></span>TikTok</button>
+  <button class="nav-btn" data-tab="x"><span class="nav-dot"></span>X</button>
+</div>
+
+<!-- ═══ MAIN ═══════════════════════════════════════════════ -->
+<div class="main">
+  <header class="topbar">
+    <div class="tb-bc">MINVU <span class="sep">›</span> <span class="cur" id="tbCur">Dashboard</span></div>
+    <div class="tb-right">
+      <div class="unsaved-pill" id="uPill">● Sin guardar</div>
+      <button class="btn btn-g" id="discardBtn" style="display:none">Descartar</button>
+      <button class="btn btn-p" id="saveBtn"    style="display:none">Guardar</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ════════════════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="ph">
+        <div>
+          <div class="ph-title">Dashboard consolidado</div>
+          <div class="ph-sub">Rendimiento mensual por red · selecciona el mes</div>
+        </div>
+        <div class="ph-actions">
+          <select class="msel" id="dashMonth">
+            <option value="0">Enero</option><option value="1">Febrero</option>
+            <option value="2" selected>Marzo</option><option value="3">Abril</option>
+            <option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option>
+            <option value="8">Septiembre</option><option value="9">Octubre</option>
+            <option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+          <button class="btn btn-ai" id="aiBtn">
+            <span class="ai-ico">✦</span><span class="sp"></span>Análisis IA
+          </button>
+        </div>
+      </div>
+      <div class="ai-panel" id="aiPanel">
+        <div class="aip-head">✦ Diagnóstico IA — <span id="aiMon"></span></div>
+        <div class="aip-body" id="aiBody"></div>
+        <div class="aip-foot" id="aiFoot"></div>
+      </div>
+      <!-- Smart metrics: engagement rate, best month, ecosystem growth -->
+      <div class="slabel">Métricas clave del ecosistema</div>
+      <div class="smart-row" id="smartRow"></div>
+
+      <!-- Community totals: seguidores acumulados por red -->
+      <div class="slabel">Comunidad total acumulada</div>
+      <div class="totals-row" id="totalsRow"></div>
+
+      <!-- Per-platform KPI cards -->
+      <div class="slabel">Rendimiento por plataforma — <span id="dashMonthLabel" style="color:var(--accent);font-weight:700"></span></div>
+      <div class="dash-grid" id="dashGrid"></div>
+
+      <!-- Trend charts -->
+      <div class="slabel">Tendencia anual — KPI principal por red</div>
+      <div class="tg" id="trendGrid"></div>
+
+      <!-- Month comparison -->
+      <div class="slabel">Comparativa mes seleccionado vs anterior</div>
+      <div class="g2" id="dashCmp"></div>
+
+      <!-- Active alerts consolidated — right before goals -->
+      <div class="slabel">Alertas activas <span id="alertsCountLabel"></span></div>
+      <div class="alerts-panel" id="alertsPanel"></div>
+
+      <!-- Monthly goals (editable) -->
+      <div class="slabel">Metas mensuales — clic para editar</div>
+      <div class="goals-grid" id="goalsGrid"></div>
+    </div>
+
+    <!-- ══ INSTAGRAM ════════════════════════════════════════ -->
+    <div class="page" id="page-instagram">
+      <div class="ph">
+        <div>
+          <div class="ph-title" style="color:var(--ig)">Instagram</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+        </div>
+      </div>
+      <!-- KPI summary cards — DO NOT REMOVE -->
+      <div class="kpi-row" id="instagram-krow"></div>
+      <!-- Charts — DO NOT REMOVE -->
+      <div class="slabel">Evolución mensual</div>
+      <div class="g2" id="instagram-charts"></div>
+      <!-- Accordion tables -->
+      <div class="slabel">Datos por KPI — haz clic para expandir</div>
+      <div class="kpi-accordion" id="instagram-tables"></div>
+    </div>
+
+    <!-- ══ FACEBOOK ══════════════════════════════════════════ -->
+    <div class="page" id="page-facebook">
+      <div class="ph">
+        <div>
+          <div class="ph-title" style="color:var(--fb)">Facebook</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+        </div>
+      </div>
+      <div class="kpi-row" id="facebook-krow"></div>
+      <div class="slabel">Evolución mensual</div>
+      <div class="g2" id="facebook-charts"></div>
+      <div class="slabel">Datos por KPI — haz clic para expandir</div>
+      <div class="kpi-accordion" id="facebook-tables"></div>
+    </div>
+
+    <!-- ══ TIKTOK ════════════════════════════════════════════ -->
+    <div class="page" id="page-tiktok">
+      <div class="ph">
+        <div>
+          <div class="ph-title" style="color:var(--tt)">TikTok</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+        </div>
+      </div>
+      <div class="kpi-row" id="tiktok-krow"></div>
+      <div class="slabel">Evolución mensual</div>
+      <div class="g2" id="tiktok-charts"></div>
+      <div class="slabel">Datos por KPI — haz clic para expandir</div>
+      <div class="kpi-accordion" id="tiktok-tables"></div>
+    </div>
+
+    <!-- ══ X ════════════════════════════════════════════════ -->
+    <div class="page" id="page-x">
+      <div class="ph">
+        <div>
+          <div class="ph-title">𝕏 (Twitter)</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+        </div>
+      </div>
+      <div class="kpi-row" id="x-krow"></div>
+      <div class="slabel">Evolución mensual</div>
+      <div class="g2" id="x-charts"></div>
+      <div class="slabel">Datos por KPI — haz clic para expandir</div>
+      <div class="kpi-accordion" id="x-tables"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- SAVE BAR -->
+<div class="save-bar" id="saveBar">
+  <button class="btn btn-g" id="sbDiscard">Descartar</button>
+  <button class="btn btn-p" id="sbSave">Guardar cambios</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ─── NETWORK CONFIG ──────────────────────────────────────────
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// CRITICAL: the key in NETS must EXACTLY match the data-tab attribute
+// AND the suffix used in HTML IDs: id="instagram-krow", id="instagram-charts", etc.
+const NETS = {
+  instagram: {
+    label:'Instagram', icon:'IG', cls:'ig', color:'#e1306c',
+    kpis:[
+      {id:'visualizaciones', label:'Visualizaciones',   fmt:'num', primary:true,
+       desc:'Número de veces que se vio o mostró tu contenido'},
+      {id:'alcance',         label:'Alcance',            fmt:'num',
+       desc:'Personas únicas que vieron tu contenido'},
+      {id:'interacciones',   label:'Interacciones',      fmt:'num',
+       desc:'Likes, comentarios, guardados y compartidos'},
+      {id:'seguidores',      label:'Nuevos Seguidores',  fmt:'num', accum:true,
+       desc:'Nuevas cuentas que empezaron a seguirte'},
+    ]
+  },
+  facebook: {
+    label:'Facebook', icon:'FB', cls:'fb', color:'#1877f2',
+    kpis:[
+      {id:'visualizaciones', label:'Visualizaciones',   fmt:'num', primary:true,
+       desc:'Veces que se vio tu contenido (orgánico + pagado)'},
+      {id:'espectadores',    label:'Espectadores',       fmt:'num',
+       desc:'Cuentas únicas que vieron tu contenido'},
+      {id:'interacciones',   label:'Interacciones',      fmt:'num',
+       desc:'Likes, comentarios, guardados y compartidos'},
+      {id:'seguidores',      label:'Nuevos Seguidores',  fmt:'num', accum:true,
+       desc:'Nuevas cuentas que empezaron a seguirte'},
+    ]
+  },
+  tiktok: {
+    label:'TikTok', icon:'TT', cls:'tt', color:'#00b2a9',
+    kpis:[
+      {id:'visualizaciones', label:'Visualizaciones',   fmt:'num', primary:true,
+       desc:'Total de veces que tus videos fueron vistos'},
+      {id:'seguidores',      label:'Seguidores Netos',  fmt:'num', accum:true,
+       desc:'Nuevos seguidores netos en el período'},
+      {id:'megusta',         label:'Me Gusta',           fmt:'num',
+       desc:'Me gusta recibidos por tus videos'},
+      {id:'comentarios',     label:'Comentarios',        fmt:'num',
+       desc:'Comentarios recibidos en el período'},
+    ]
+  },
+  x: {
+    label:'X', icon:'𝕏', cls:'x', color:'#374151',
+    kpis:[
+      {id:'seguidores',        label:'Nuevos Seguidores',   fmt:'num', accum:true, primary:true,
+       desc:'Cuentas nuevas que siguen tu perfil en X'},
+      {id:'tasa_interaccion',  label:'Tasa de Interacción', fmt:'pct',
+       desc:'% de interacciones sobre el total de impresiones'},
+      {id:'impresiones',       label:'Impresiones',         fmt:'num',
+       desc:'Veces que se mostraron tus publicaciones'},
+      {id:'interacciones',     label:'Interacciones',       fmt:'num',
+       desc:'Likes, retweets, respuestas y clics en enlaces'},
+    ]
+  }
+};
+
+// ─── SEED DATA ────────────────────────────────────────────────
+// TikTok Marzo visualizaciones = 94 000 (corregido)
+const SEED = {
+  instagram: {
+    visualizaciones:[3441648,4026906,7229225,null,null,null,null,null,null,null,null,null],
+    alcance:        [470267,330216,964570,null,null,null,null,null,null,null,null,null],
+    interacciones:  [42454,56577,116642,null,null,null,null,null,null,null,null,null],
+    seguidores:     [5266,5307,11581,null,null,null,null,null,null,null,null,null],
+    seguidores_accum:[310147,313025,316832,null,null,null,null,null,null,null,null,null],
+  },
+  facebook: {
+    visualizaciones:[3686900,1918007,2629593,null,null,null,null,null,null,null,null,null],
+    espectadores:   [1425093,614668,803104,null,null,null,null,null,null,null,null,null],
+    interacciones:  [85922,22714,31907,null,null,null,null,null,null,null,null,null],
+    seguidores:     [2025,1491,2001,null,null,null,null,null,null,null,null,null],
+    seguidores_accum:[533949,535098,535931,null,null,null,null,null,null,null,null,null],
+  },
+  tiktok: {
+    visualizaciones:[114000,100000,94000,null,null,null,null,null,null,null,null,null],
+    seguidores:     [291,250,260,null,null,null,null,null,null,null,null,null],
+    seguidores_accum:[80077,80327,80587,null,null,null,null,null,null,null,null,null],
+    megusta:        [2500,2100,94000,null,null,null,null,null,null,null,null,null],
+    comentarios:    [8,30,17,null,null,null,null,null,null,null,null,null],
+  },
+  x: {
+    seguidores:       [134,173,1672,null,null,null,null,null,null,null,null,null],
+    seguidores_accum: [229256,229390,231062,null,null,null,null,null,null,null,null,null],
+    tasa_interaccion: [0.0717,0.0981,0.0741,null,null,null,null,null,null,null,null,null],
+    impresiones:      [130916,49685,323167,null,null,null,null,null,null,null,null,null],
+    interacciones:    [9385,4874,29935,null,null,null,null,null,null,null,null,null],
+  }
+};
+
+
+// ── Default monthly goals (editable per KPI) ────────────────
+const DEFAULT_GOALS = {
+  instagram: { visualizaciones:5000000, alcance:800000, interacciones:80000, seguidores:8000 },
+  facebook:  { visualizaciones:2500000, espectadores:700000, interacciones:40000, seguidores:2000 },
+  tiktok:    { visualizaciones:100000,  seguidores:300, megusta:5000, comentarios:20 },
+  x:         { seguidores:500, tasa_interaccion:0.08, impresiones:200000, interacciones:10000 },
+};
+
+const SK = 'minvu_rrss_2026_v5';
+
+// ─── STATE ────────────────────────────────────────────────────
+let D, charts = {}, changed = false, curTab = 'dashboard';
+
+// ─── DATA PERSISTENCE ─────────────────────────────────────────
+// ── Supabase client ────────────────────────────────────────
+const SUPABASE_URL = 'https://hsaavmkyrwhsghdferwk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzYWF2bWt5cndoc2doZGZlcndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMjIzOTYsImV4cCI6MjA5MTY5ODM5Nn0.fbAd6itlOt-tOQo1RS6v1u0nyspM1NqBOACMXqHZNp8';
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── Merge helper (shared by both load paths) ────────────────
+function mergeSaved(saved) {
+  const base = JSON.parse(JSON.stringify(SEED));
+  if (!saved) return base;
+  for (const net in base) {
+    if (!saved[net]) continue;
+    for (const kpi in base[net]) {
+      if (!Array.isArray(saved[net][kpi])) continue;
+      base[net][kpi] = base[net][kpi].map((v, i) =>
+        saved[net][kpi][i] !== undefined ? saved[net][kpi][i] : v
+      );
+    }
+  }
+  // Restore saved goals if present
+  if (saved.__goals) base.__goals = saved.__goals;
+  else base.__goals = JSON.parse(JSON.stringify(DEFAULT_GOALS));
+  return base;
+}
+
+async function loadData() {
+  // 1. Try Supabase
+  try {
+    const { data, error } = await sbClient
+      .from('minvu_data')
+      .select('payload')
+      .eq('id', 'main')
+      .maybeSingle();
+    if (!error && data && data.payload) {
+      // Also cache locally for offline fallback
+      try { localStorage.setItem(SK, JSON.stringify(data.payload)); } catch(_) {}
+      return mergeSaved(data.payload);
+    }
+  } catch(e) { console.warn('Supabase loadData error:', e); }
+  // 2. Fallback: localStorage
+  try {
+    const raw = localStorage.getItem(SK);
+    if (raw) return mergeSaved(JSON.parse(raw));
+  } catch(e) { console.warn('localStorage loadData error:', e); }
+  // 3. Final fallback: seed data
+  return JSON.parse(JSON.stringify(SEED));
+}
+
+async function persist() {
+  // 1. Save to Supabase
+  try {
+    const { error } = await sbClient
+      .from('minvu_data')
+      .upsert({ id: 'main', payload: D }, { onConflict: 'id' });
+    if (!error) {
+      // Also update local cache
+      try { localStorage.setItem(SK, JSON.stringify(D)); } catch(_) {}
+      return true;
+    }
+    console.error('Supabase persist error:', error);
+  } catch(e) { console.error('Supabase persist exception:', e); }
+  // 2. Fallback: localStorage only
+  try { localStorage.setItem(SK, JSON.stringify(D)); return true; }
+  catch(e) { console.error('localStorage persist error:', e); return false; }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────
+function fmt(v, f) {
+  if (v == null) return '—';
+  if (f === 'pct') return (v * 100).toFixed(2) + '%';
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return Number(v).toLocaleString('es-CL');
+}
+
+function vari(c, p) {
+  if (c == null || p == null || p === 0) return null;
+  return ((c - p) / Math.abs(p)) * 100;
+}
+
+function varHtml(c, p) {
+  const v = vari(c, p);
+  if (v === null) return '<span class="vf">—</span>';
+  return `<span class="${v > 0 ? 'vu' : 'vd'}">${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%</span>`;
+}
+
+function pillHtml(c, p) {
+  const v = vari(c, p);
+  if (v === null) return '<span class="pill pill-no">Sin dato</span>';
+  if (v >= 0)    return '<span class="pill pill-ok">OK</span>';
+  if (v >= -20)  return '<span class="pill pill-wn">Atención</span>';
+  return '<span class="pill pill-bd">Alerta</span>';
+}
+
+function liIdx(arr) {
+  for (let i = arr.length - 1; i >= 0; i--) if (arr[i] != null) return i;
+  return -1;
+}
+
+function kc(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.className = 'toast', 2600);
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────
+// Build sidebar sub-menus for each network
+function buildSidebarSubs() {
+  for (const [nid, cfg] of Object.entries(NETS)) {
+    const sub = document.getElementById('sub-' + nid);
+    if (!sub) continue;
+    sub.innerHTML = cfg.kpis.map((kpi, i) => `
+      <button class="nav-sub-item" data-tab="${nid}" data-kpi="${kpi.id}">
+        ${kpi.label}
+      </button>`).join('');
+    // Click on sub-item → navigate to network tab and scroll to that KPI section
+    sub.querySelectorAll('.nav-sub-item').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        goTab(btn.dataset.tab);
+        // After render, scroll to the accordion item for this KPI
+        setTimeout(() => {
+          const target = document.getElementById(`acc-${btn.dataset.tab}-${btn.dataset.kpi}`);
+          if (target) {
+            target.scrollIntoView({ behavior:'smooth', block:'start' });
+            // Auto-open accordion if closed
+            const body = target.querySelector('.kpi-acc-body');
+            const hdr  = target.querySelector('.kpi-acc-header');
+            if (body && !body.classList.contains('open')) {
+              body.classList.add('open');
+              hdr.classList.add('open');
+            }
+          }
+        }, 80);
+      });
+    });
+  }
+}
+
+// Bind nav buttons in both sidebar and mobile nav
+function bindAllNav() {
+  document.querySelectorAll('.nav-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => goTab(btn.dataset.tab));
+  });
+}
+
+function goTab(tab) {
+  curTab = tab;
+
+  // Sync nav buttons
+  document.querySelectorAll('.nav-btn[data-tab]').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab)
+  );
+
+  // Toggle sidebar sub-menus
+  for (const nid of Object.keys(NETS)) {
+    const sub = document.getElementById('sub-' + nid);
+    const btn = document.querySelector(`.sidebar .nav-btn[data-tab="${nid}"]`);
+    if (!sub || !btn) continue;
+    const isActive = nid === tab;
+    sub.classList.toggle('open', isActive);
+    btn.classList.toggle('open', isActive);
+  }
+
+  // Show the right page
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + tab);
+  if (!pg) { console.error('MISSING PAGE: page-' + tab); return; }
+  pg.classList.add('active');
+
+  // Topbar breadcrumb
+  const labels = { dashboard:'Dashboard', instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', x:'X' };
+  document.getElementById('tbCur').textContent = labels[tab] || tab;
+
+  // Render content
+  if (tab === 'dashboard') renderDash();
+  else renderNet(tab);
+}
+
+// ─── CHART DEFAULTS ───────────────────────────────────────────
+const CD = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9',
+      borderColor: '#334155', borderWidth: 1, padding: 10, callbacks: {}
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: '#94a3b8', font: { size: 11 }, maxRotation: 0,
+               callback: (v, i) => MONTHS[i].slice(0, 3) }
+    },
+    y: {
+      grid: { color: '#f1f5f9' },
+      ticks: { color: '#94a3b8', font: { size: 11 } }
+    }
+  },
+  animation: { duration: 350 }
+};
+
+function barChart(cid, data, color, fmtType) {
+  kc(cid);
+  const ctx = document.getElementById(cid);
+  if (!ctx) return;
+  charts[cid] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        data,
+        backgroundColor: data.map(v => v != null ? color + '28' : 'transparent'),
+        borderColor:     data.map(v => v != null ? color       : 'transparent'),
+        borderWidth: 2, borderRadius: 5, borderSkipped: false,
+      }]
+    },
+    options: {
+      ...CD,
+      plugins: {
+        ...CD.plugins,
+        tooltip: {
+          ...CD.plugins.tooltip,
+          callbacks: {
+            title: items => MONTHS[items[0].dataIndex],
+            label: item => item.raw != null ? fmt(item.raw, fmtType) : 'Sin dato'
+          }
+        }
+      },
+      scales: {
+        x: CD.scales.x,
+        y: { ...CD.scales.y, ticks: { ...CD.scales.y.ticks, callback: v => fmt(v, fmtType) } }
+      }
+    }
+  });
+}
+
+function lineChart(cid, datasets) {
+  kc(cid);
+  const ctx = document.getElementById(cid);
+  if (!ctx) return;
+  charts[cid] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: MONTHS,
+      datasets: datasets.map(ds => ({
+        label: ds.label, data: ds.data,
+        borderColor: ds.color, backgroundColor: ds.color + '14',
+        borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
+        tension: 0.35, fill: true, spanGaps: false,
+      }))
+    },
+    options: {
+      ...CD,
+      plugins: {
+        ...CD.plugins,
+        legend: { display: true, labels: { color: '#64748b', font: { size: 11 }, boxWidth: 10, padding: 12 } },
+        tooltip: {
+          ...CD.plugins.tooltip,
+          callbacks: {
+            title: items => MONTHS[items[0].dataIndex],
+            label: item => `${item.dataset.label}: ${item.raw != null ? fmt(item.raw) : 'Sin dato'}`
+          }
+        }
+      },
+      scales: {
+        x: CD.scales.x,
+        y: { ...CD.scales.y, ticks: { ...CD.scales.y.ticks, callback: v => fmt(v) } }
+      }
+    }
+  });
+}
+
+// ─── NETWORK PAGE RENDERER ────────────────────────────────────
+function renderNet(nid) {
+  const cfg = NETS[nid];
+  if (!cfg) { console.error('Unknown network:', nid); return; }
+
+  // 1. KPI summary cards (top 4 boxes)
+  const krowEl = document.getElementById(nid + '-krow');
+  if (!krowEl) { console.error('MISSING:', nid + '-krow'); return; }
+  krowEl.innerHTML = '';
+  cfg.kpis.forEach(kpi => {
+    const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+    const li = liIdx(arr), c = li >= 0 ? arr[li] : null, p = li > 0 ? arr[li-1] : null;
+    const v = vari(c, p);
+    const vcls = v === null ? 'fl' : v > 0 ? 'up' : 'dn';
+    const vtxt = v === null ? '' : `${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%`;
+    const card = document.createElement('div');
+    card.className = 'kc';
+    card.innerHTML = `
+      <div class="kc-head">
+        <span class="kc-lbl">${kpi.label}</span>
+        <div class="kc-ico" style="background:${cfg.color}18;color:${cfg.color}">${cfg.icon}</div>
+      </div>
+      <div class="kc-val">${fmt(c, kpi.fmt)}</div>
+      <div class="kc-meta">
+        ${vtxt ? `<span class="kc-badge ${vcls}">${vtxt}</span>` : ''}
+        <span class="kc-period">${li >= 0 ? MONTHS[li] : 'Sin datos'}</span>
+      </div>`;
+    krowEl.appendChild(card);
+  });
+
+  // 2. Charts (evolución mensual)
+  const chartsEl = document.getElementById(nid + '-charts');
+  if (!chartsEl) { console.error('MISSING:', nid + '-charts'); return; }
+  chartsEl.innerHTML = '';
+  cfg.kpis.forEach(kpi => {
+    const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : new Array(12).fill(null);
+    const cid = `ch-${nid}-${kpi.id}`;
+    const div = document.createElement('div');
+    div.className = 'cc';
+    div.innerHTML = `
+      <div class="cc-head">
+        <div>
+          <div class="cc-title">${kpi.label}</div>
+          <div class="cc-sub">${kpi.desc}</div>
+        </div>
+      </div>
+      <div class="cw" style="height:180px">
+        <canvas id="${cid}" role="img" aria-label="${kpi.label} · ${cfg.label}"></canvas>
+      </div>`;
+    chartsEl.appendChild(div);
+    requestAnimationFrame(() => barChart(cid, arr, cfg.color, kpi.fmt));
+  });
+
+  // 3. Accordion tables (one per KPI)
+  const tablesEl = document.getElementById(nid + '-tables');
+  if (!tablesEl) { console.error('MISSING:', nid + '-tables'); return; }
+  tablesEl.innerHTML = '';
+
+  cfg.kpis.forEach((kpi, kIdx) => {
+    const arr   = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : new Array(12).fill(null);
+    const aArr  = kpi.accum ? ((D[nid] && D[nid][kpi.id+'_accum']) ? D[nid][kpi.id+'_accum'] : new Array(12).fill(null)) : null;
+    const li    = liIdx(arr);
+    const c     = li >= 0 ? arr[li] : null;
+    const p     = li > 0  ? arr[li-1] : null;
+    const v     = vari(c, p);
+    const vcls  = v === null ? 'fl' : v > 0 ? 'up' : 'dn';
+
+    // Build table rows
+    let rows = '';
+    MONTHS.forEach((m, i) => {
+      const val  = arr[i];
+      const prev = i > 0 ? arr[i-1] : null;
+      const aval = aArr ? aArr[i] : null;
+      const iv   = val  !== null ? (kpi.fmt === 'pct' ? (val * 100).toFixed(4) : val) : '';
+      const iav  = aval !== null ? aval : '';
+      rows += `<tr>
+        <td class="cm">${m}</td>
+        <td class="cv">
+          <input class="ei" type="number" min="0"
+            step="${kpi.fmt === 'pct' ? '0.001' : '1'}"
+            data-n="${nid}" data-k="${kpi.id}" data-i="${i}" data-f="${kpi.fmt}"
+            value="${iv}" placeholder="—">
+        </td>
+        <td>${varHtml(val, prev)}</td>
+        ${aArr ? `<td class="cv">
+          <input class="ei" type="number" min="0" step="1"
+            data-n="${nid}" data-k="${kpi.id}_accum" data-i="${i}" data-f="num"
+            value="${iav}" placeholder="—">
+        </td>` : ''}
+        <td>${pillHtml(val, prev)}</td>
+      </tr>`;
+    });
+    // Total row
+    const nn    = arr.filter(v => v != null);
+    const total = nn.length ? nn.reduce((a,b) => a+b, 0) : null;
+    const lai   = aArr ? liIdx(aArr) : -1;
+    rows += `<tr class="tr-tot">
+      <td>TOTAL / PROM.</td>
+      <td>${fmt(total, kpi.fmt)}</td>
+      <td></td>
+      ${aArr ? `<td>${fmt(lai >= 0 ? aArr[lai] : null)}</td>` : ''}
+      <td></td>
+    </tr>`;
+
+    const item = document.createElement('div');
+    item.className = 'kpi-acc-item';
+    item.id = `acc-${nid}-${kpi.id}`;
+    item.innerHTML = `
+      <div class="kpi-acc-header" data-nid="${nid}" data-kpi="${kpi.id}">
+        <div class="kpi-acc-left">
+          <div class="kpi-acc-num">${kIdx + 1}</div>
+          <div>
+            <div class="kpi-acc-name">${kpi.label}</div>
+            <div class="kpi-acc-desc">${kpi.desc}</div>
+          </div>
+        </div>
+        <div class="kpi-acc-summary">
+          <span class="kpi-acc-val">${fmt(c, kpi.fmt)}</span>
+          ${v !== null ? `<span class="kpi-acc-chg ${vcls}">${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%</span>` : ''}
+          <span class="kpi-acc-arrow">›</span>
+        </div>
+      </div>
+      <div class="kpi-acc-body">
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th>${kpi.label}</th>
+              <th>Var. vs anterior</th>
+              ${aArr ? '<th>Acumulado (neto)</th>' : ''}
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    // Toggle accordion on header click
+    item.querySelector('.kpi-acc-header').addEventListener('click', function() {
+      const body = item.querySelector('.kpi-acc-body');
+      const isOpen = body.classList.toggle('open');
+      this.classList.toggle('open', isOpen);
+    });
+
+    tablesEl.appendChild(item);
+  });
+
+  // Bind all input change events for this network
+  tablesEl.querySelectorAll('.ei').forEach(inp => {
+    inp.addEventListener('change', onInputChange);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+  });
+}
+
+// ─── INPUT CHANGE HANDLER ─────────────────────────────────────
+function onInputChange(e) {
+  const { n, k, i, f } = e.target.dataset;
+  const idx = parseInt(i);
+  const raw = e.target.value.trim();
+  let val = null;
+  if (raw !== '') {
+    const num = parseFloat(raw);
+    if (!isNaN(num)) val = f === 'pct' ? num / 100 : num;
+  }
+
+  if (!D[n]) D[n] = {};
+  if (!Array.isArray(D[n][k])) D[n][k] = new Array(12).fill(null);
+  D[n][k][idx] = val;
+
+  // Refresh variation + pill in the same row + adjacent row
+  const row = e.target.closest('tr');
+  if (row) {
+    const tbody = row.closest('tbody');
+    const allRows = [...tbody.querySelectorAll('tr:not(.tr-tot)')];
+    const ri = allRows.indexOf(row);
+    if (ri >= 0) {
+      const arr = D[n][k];
+      row.cells[2].innerHTML = varHtml(arr[ri], ri > 0 ? arr[ri-1] : null);
+      row.cells[row.cells.length - 1].innerHTML = pillHtml(arr[ri], ri > 0 ? arr[ri-1] : null);
+      const nextRow = allRows[ri + 1];
+      if (nextRow) {
+        nextRow.cells[2].innerHTML = varHtml(arr[ri+1], arr[ri]);
+        nextRow.cells[nextRow.cells.length - 1].innerHTML = pillHtml(arr[ri+1], arr[ri]);
+      }
+    }
+  }
+
+  markChanged();
+}
+
+// ─── UNSAVED CHANGES ──────────────────────────────────────────
+function markChanged() {
+  changed = true;
+  document.getElementById('uPill').classList.add('show');
+  document.getElementById('saveBar').classList.add('vis');
+  document.getElementById('saveBtn').style.display = 'inline-flex';
+  document.getElementById('discardBtn').style.display = 'inline-flex';
+}
+
+async function doSave() {
+  document.getElementById('saveBtn').disabled = true;
+  document.getElementById('sbSave').disabled = true;
+  const ok = await persist();
+  document.getElementById('saveBtn').disabled = false;
+  document.getElementById('sbSave').disabled = false;
+  changed = false;
+  document.getElementById('uPill').classList.remove('show');
+  document.getElementById('saveBar').classList.remove('vis');
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('discardBtn').style.display = 'none';
+  toast(ok ? '✓ Datos guardados' : '✗ Error al guardar', ok ? 'ok' : 'err');
+  // Re-render charts if on a network tab
+  if (curTab !== 'dashboard') {
+    const chartsEl = document.getElementById(curTab + '-charts');
+    if (chartsEl) {
+      const cfg = NETS[curTab];
+      chartsEl.innerHTML = '';
+      cfg.kpis.forEach(kpi => {
+        const arr = (D[curTab] && D[curTab][kpi.id]) ? D[curTab][kpi.id] : new Array(12).fill(null);
+        const cid = `ch-${curTab}-${kpi.id}`;
+        const div = document.createElement('div'); div.className = 'cc';
+        div.innerHTML = `<div class="cc-head"><div><div class="cc-title">${kpi.label}</div><div class="cc-sub">${kpi.desc}</div></div></div><div class="cw" style="height:180px"><canvas id="${cid}" role="img" aria-label="${kpi.label}"></canvas></div>`;
+        chartsEl.appendChild(div);
+        requestAnimationFrame(() => barChart(cid, arr, cfg.color, kpi.fmt));
+      });
+    }
+  } else renderDash();
+}
+
+async function doDiscard() {
+  D = await loadData();
+  changed = false;
+  document.getElementById('uPill').classList.remove('show');
+  document.getElementById('saveBar').classList.remove('vis');
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('discardBtn').style.display = 'none';
+  if (curTab === 'dashboard') renderDash();
+  else renderNet(curTab);
+  toast('Cambios descartados', 'err');
+}
+
+['saveBtn','sbSave'].forEach(id =>
+  document.getElementById(id).addEventListener('click', doSave));
+['discardBtn','sbDiscard'].forEach(id =>
+  document.getElementById(id).addEventListener('click', doDiscard));
+
+window.addEventListener('beforeunload', e => {
+  if (changed) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// ─── DASHBOARD RENDERER ───────────────────────────────────────
+function renderDash() {
+  const mi = parseInt(document.getElementById('dashMonth').value);
+  const pi = mi > 0 ? mi - 1 : null;
+  // Update month label
+  const ml = document.getElementById('dashMonthLabel');
+  if (ml) ml.textContent = MONTHS[mi];
+  renderSmartMetrics(mi, pi);
+  renderTotals();
+  renderAlerts(mi, pi);
+  renderDashCards(mi, pi);
+  renderTrends();
+  renderDashCompare(mi, pi);
+  renderGoals();
+}
+document.getElementById('dashMonth').addEventListener('change', renderDash);
+
+function renderDashCards(mi, pi) {
+  const el = document.getElementById('dashGrid');
+  if (!el) return;
+  el.innerHTML = '';
+  for (const [nid, cfg] of Object.entries(NETS)) {
+    let kHtml = '';
+    cfg.kpis.forEach(kpi => {
+      const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+      const c = arr[mi] ?? null, p = pi !== null ? (arr[pi] ?? null) : null;
+      const v = vari(c, p);
+      const vcls = v === null ? 'fl' : v > 0 ? 'up' : 'dn';
+      const vtxt = v === null ? '—' : `${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%`;
+      kHtml += `<div>
+        <div class="dkpi-lbl">${kpi.label}</div>
+        <div class="dkpi-val">${fmt(c, kpi.fmt)}</div>
+        <div class="dkpi-chg ${vcls}">${vtxt}</div>
+      </div>`;
+    });
+    const card = document.createElement('div');
+    card.className = `dnc ${cfg.cls}`;
+    card.innerHTML = `
+      <div class="dnc-head">
+        <div class="dnc-ico ${cfg.cls}">${cfg.icon}</div>
+        <div class="dnc-name">${cfg.label}</div>
+      </div>
+      <div class="dnc-kpis">${kHtml}</div>`;
+    el.appendChild(card);
+  }
+}
+
+function renderTrends() {
+  const el = document.getElementById('trendGrid');
+  if (!el) return;
+  el.innerHTML = '';
+
+  addTrendCard(el, 'tr-ig-fb',
+    'Visualizaciones — Instagram vs Facebook',
+    'KPI principal · evolución 2026',
+    [
+      { label: 'Instagram', color: '#e1306c', data: D.instagram.visualizaciones || new Array(12).fill(null) },
+      { label: 'Facebook',  color: '#1877f2', data: D.facebook.visualizaciones  || new Array(12).fill(null) },
+    ]
+  );
+
+  addTrendCard(el, 'tr-tt-x',
+    'TikTok Visualizaciones & X Impresiones',
+    'KPI principal · evolución 2026',
+    [
+      { label: 'TikTok (Visualizaciones)', color: '#00b2a9', data: D.tiktok.visualizaciones || new Array(12).fill(null) },
+      { label: 'X (Impresiones)',          color: '#6b7280', data: D.x.impresiones          || new Array(12).fill(null) },
+    ]
+  );
+}
+
+function addTrendCard(container, cid, title, sub, datasets) {
+  const div = document.createElement('div');
+  div.className = 'cc';
+  div.innerHTML = `
+    <div class="cc-head">
+      <div><div class="cc-title">${title}</div><div class="cc-sub">${sub}</div></div>
+    </div>
+    <div class="cw" style="height:190px">
+      <canvas id="${cid}" role="img" aria-label="${title}"></canvas>
+    </div>`;
+  container.appendChild(div);
+  requestAnimationFrame(() => lineChart(cid, datasets));
+}
+
+function renderDashCompare(mi, pi) {
+  const el = document.getElementById('dashCmp');
+  if (!el) return;
+  el.innerHTML = '';
+  const mL = MONTHS[mi], pL = pi !== null ? MONTHS[pi] : null;
+
+  addCompareCard(el, 'dc-viz',
+    'Visualizaciones por red', `${mL}${pL ? ' vs ' + pL : ''}`,
+    ['Instagram','Facebook','TikTok'],
+    [D.instagram.visualizaciones, D.facebook.visualizaciones, D.tiktok.visualizaciones],
+    ['#e1306c','#1877f2','#00b2a9'], mi, pi, mL, pL
+  );
+
+  addCompareCard(el, 'dc-eng',
+    'Interacciones por red', `${mL}${pL ? ' vs ' + pL : ''}`,
+    ['Instagram','Facebook','X'],
+    [D.instagram.interacciones, D.facebook.interacciones, D.x.interacciones],
+    ['#e1306c','#1877f2','#6b7280'], mi, pi, mL, pL
+  );
+}
+
+function addCompareCard(container, cid, title, sub, netLabels, netArrays, colors, mi, pi, mL, pL) {
+  const div = document.createElement('div');
+  div.className = 'cc';
+  div.innerHTML = `
+    <div class="cc-head">
+      <div><div class="cc-title">${title}</div><div class="cc-sub">${sub}</div></div>
+    </div>
+    <div class="cw" style="height:185px">
+      <canvas id="${cid}" role="img" aria-label="${title}"></canvas>
+    </div>`;
+  container.appendChild(div);
+
+  requestAnimationFrame(() => {
+    kc(cid);
+    const ctx = document.getElementById(cid);
+    if (!ctx) return;
+    const ds = [{
+      label: mL,
+      data: netArrays.map(a => (a && a[mi] != null) ? a[mi] : null),
+      backgroundColor: colors.map(c => c + '50'),
+      borderColor: colors,
+      borderWidth: 1.5, borderRadius: 4, borderSkipped: false,
+    }];
+    if (pi !== null) {
+      ds.push({
+        label: pL,
+        data: netArrays.map(a => (a && a[pi] != null) ? a[pi] : null),
+        backgroundColor: colors.map(c => c + '18'),
+        borderColor: colors.map(c => c + '70'),
+        borderWidth: 1, borderRadius: 3, borderSkipped: false,
+      });
+    }
+    charts[cid] = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: netLabels, datasets: ds },
+      options: {
+        ...CD,
+        plugins: {
+          ...CD.plugins,
+          legend: { display: pi !== null, labels: { color:'#64748b', font:{size:11}, boxWidth:10, padding:12 } },
+          tooltip: {
+            ...CD.plugins.tooltip,
+            callbacks: {
+              label: item => `${item.dataset.label}: ${item.raw != null ? fmt(item.raw) : 'Sin dato'}`
+            }
+          }
+        },
+        scales: {
+          x: { ...CD.scales.x, ticks: { color:'#94a3b8', font:{size:11} } },
+          y: { ...CD.scales.y, ticks: { ...CD.scales.y.ticks, callback: v => fmt(v) } }
+        }
+      }
+    });
+  });
+}
+
+// ─── AI ANALYSIS ──────────────────────────────────────────────
+document.getElementById('aiBtn').addEventListener('click', async () => {
+  const btn   = document.getElementById('aiBtn');
+  const panel = document.getElementById('aiPanel');
+  const body  = document.getElementById('aiBody');
+  const foot  = document.getElementById('aiFoot');
+  const mi    = parseInt(document.getElementById('dashMonth').value);
+  const pi    = mi > 0 ? mi - 1 : null;
+
+  btn.classList.add('loading'); btn.disabled = true;
+  panel.classList.add('vis');
+  document.getElementById('aiMon').textContent = MONTHS[mi];
+  body.innerHTML = '<span style="color:var(--muted)">Analizando datos del mes...</span>';
+  foot.textContent = '';
+
+  const summary = buildSummary(mi, pi);
+
+  try {
+    const res = await fetch('/.netlify/functions/ai-proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: `Eres el Community Manager del MINVU (Ministerio de Vivienda y Urbanismo de Chile).
+Experto en análisis de redes sociales institucionales.
+Responde SIEMPRE en español. Sé concreto y directo.
+Estructura tu respuesta así:
+1) Resumen ejecutivo (2 oraciones clave).
+2) Destacados por red (un punto por red: dato más relevante y su variación).
+3) Acciones recomendadas (máximo 3 puntos concretos).
+Máximo 260 palabras. Usa emojis con moderación.`,
+        messages: [{
+          role: 'user',
+          content: `Analiza el rendimiento MINVU en ${MONTHS[mi]} 2026${pi !== null ? ` vs ${MONTHS[pi]}` : ''}:\n\n${summary}`
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text;
+    if (!text) throw new Error('Respuesta vacía del servidor');
+    body.textContent = text;
+    foot.textContent = `Generado el ${new Date().toLocaleString('es-CL')}`;
+
+  } catch(err) {
+    let msg = err.message;
+    if (msg.includes('401') || msg.includes('api_key') || msg.includes('authentication')) {
+      msg = 'API key no válida. Ve a Netlify → Site → Environment variables y agrega ANTHROPIC_API_KEY.';
+    } else if (msg.includes('500') || msg.includes('proxy')) {
+      msg = 'Error en el servidor proxy. Verifica que ANTHROPIC_API_KEY esté configurada en Netlify.';
+    }
+    body.innerHTML = `<span class="ai-err">⚠ ${msg}</span>\n\n<span style="color:var(--muted);font-size:12px">Resumen de datos (${MONTHS[mi]}):\n${summary}</span>`;
+  } finally {
+    btn.classList.remove('loading'); btn.disabled = false;
+  }
+});
+
+
+// ─── SMART METRICS ────────────────────────────────────────────
+function renderSmartMetrics(mi, pi) {
+  const el = document.getElementById('smartRow');
+  if (!el) return;
+  el.innerHTML = '';
+
+  // 1. Engagement Rate Instagram (interacciones/alcance)
+  const igInter = (D.instagram.interacciones||[])[mi] ?? null;
+  const igAlc   = (D.instagram.alcance||[])[mi] ?? null;
+  const igER    = (igInter != null && igAlc != null && igAlc > 0)
+    ? ((igInter / igAlc) * 100).toFixed(2) + '%' : '—';
+  const igERPrev = pi !== null
+    ? (((D.instagram.interacciones||[])[pi]??null) != null && ((D.instagram.alcance||[])[pi]??null) > 0
+       ? (((D.instagram.interacciones||[])[pi]) / ((D.instagram.alcance||[])[pi]) * 100)
+       : null)
+    : null;
+  const igERCurr = (igInter != null && igAlc != null && igAlc > 0)
+    ? (igInter / igAlc * 100) : null;
+  const erV = igERCurr !== null && igERPrev !== null
+    ? ((igERCurr - igERPrev) / Math.abs(igERPrev) * 100) : null;
+
+  // 2. Best network this month (by visualizaciones)
+  const vizThisMonth = {
+    Instagram: (D.instagram.visualizaciones||[])[mi] ?? null,
+    Facebook:  (D.facebook.visualizaciones||[])[mi]  ?? null,
+    TikTok:    (D.tiktok.visualizaciones||[])[mi]    ?? null,
+    'X Impresiones': (D.x.impresiones||[])[mi]       ?? null,
+  };
+  let bestNet = '—', bestVal = null;
+  for (const [net, val] of Object.entries(vizThisMonth)) {
+    if (val != null && (bestVal === null || val > bestVal)) {
+      bestVal = val; bestNet = net;
+    }
+  }
+
+  // 3. Ecosystem follower growth this month vs prev
+  const nets4 = ['instagram','facebook','tiktok','x'];
+  const totalNewSegs = nets4.reduce((sum, nid) => {
+    const v = (D[nid].seguidores||[])[mi] ?? null;
+    return v != null ? sum + v : sum;
+  }, 0);
+  const totalPrevSegs = pi !== null ? nets4.reduce((sum, nid) => {
+    const v = (D[nid].seguidores||[])[pi] ?? null;
+    return v != null ? sum + v : sum;
+  }, 0) : null;
+  const ecoGrowthV = totalPrevSegs ? vari(totalNewSegs, totalPrevSegs) : null;
+
+  const cards = [
+    {
+      icon: '📊', cls: 'engage',
+      label: 'Engagement Rate · Instagram',
+      value: igER,
+      sub: erV !== null
+        ? `${erV > 0 ? '▲' : '▼'} ${Math.abs(erV).toFixed(1)}% vs mes anterior · Benchmark sector público: 1–3%`
+        : 'Interacciones ÷ Alcance × 100 · Benchmark sector público: 1–3%',
+    },
+    {
+      icon: '🏆', cls: 'trophy',
+      label: 'Red con mayor alcance este mes',
+      value: bestNet,
+      sub: bestVal !== null ? `${fmt(bestVal)} visualizaciones / impresiones` : 'Sin datos suficientes',
+    },
+    {
+      icon: '📈', cls: 'growth',
+      label: 'Nuevos seguidores · Ecosistema total',
+      value: fmt(totalNewSegs || null),
+      sub: ecoGrowthV !== null
+        ? `${ecoGrowthV > 0 ? '▲' : '▼'} ${Math.abs(ecoGrowthV).toFixed(1)}% vs mes anterior · todas las redes`
+        : 'Suma de nuevos seguidores en las 4 redes',
+    },
+  ];
+
+  cards.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'smart-card';
+    div.innerHTML = `
+      <div class="smart-icon ${c.cls}">${c.icon}</div>
+      <div>
+        <div class="smart-label">${c.label}</div>
+        <div class="smart-value">${c.value}</div>
+        <div class="smart-sub">${c.sub}</div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+// ─── COMMUNITY TOTALS ─────────────────────────────────────────
+function renderTotals() {
+  const el = document.getElementById('totalsRow');
+  if (!el) return;
+  el.innerHTML = '';
+  const configs = [
+    { nid:'instagram', cls:'ig', icon:'IG', label:'Instagram', accumKey:'seguidores_accum' },
+    { nid:'facebook',  cls:'fb', icon:'FB', label:'Facebook',  accumKey:'seguidores_accum' },
+    { nid:'tiktok',    cls:'tt', icon:'TT', label:'TikTok',    accumKey:'seguidores_accum' },
+    { nid:'x',         cls:'x',  icon:'𝕏',  label:'X',         accumKey:'seguidores_accum' },
+  ];
+  configs.forEach(({ nid, cls, icon, label, accumKey }) => {
+    const arr = D[nid]?.[accumKey] || [];
+    const li  = liIdx(arr);
+    const total = li >= 0 ? arr[li] : null;
+    const prev  = li > 0  ? arr[li-1] : null;
+    const v     = vari(total, prev);
+    const card  = document.createElement('div');
+    card.className = `total-card ${cls}`;
+    card.innerHTML = `
+      <div class="total-card-label">
+        <span style="font-weight:700">${icon}</span> ${label}
+      </div>
+      <div class="total-card-value">${fmt(total)}</div>
+      <div class="total-card-sub">
+        ${v !== null
+          ? `${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}% · ${li >= 0 ? MONTHS[li] : ''}`
+          : 'Seguidores totales acumulados'}
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+// ─── ALERTS PANEL ─────────────────────────────────────────────
+function renderAlerts(mi, pi) {
+  const el = document.getElementById('alertsPanel');
+  const countLabel = document.getElementById('alertsCountLabel');
+  if (!el) return;
+
+  const alertItems = [];
+  for (const [nid, cfg] of Object.entries(NETS)) {
+    cfg.kpis.forEach(kpi => {
+      if (kpi.fmt === 'pct') return; // skip rate metrics for alert logic
+      const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+      const c = arr[mi] ?? null;
+      const p = pi !== null ? (arr[pi] ?? null) : null;
+      const v = vari(c, p);
+      if (v === null) return;
+      let severity = null;
+      if (v <= -40)     severity = 'red';
+      else if (v <= -20) severity = 'amber';
+      else if (v >= 20)  severity = 'green';
+      if (severity) {
+        alertItems.push({ nid, cls: cfg.cls, netLabel: cfg.label, kpiLabel: kpi.label, v, severity, c, fmt: kpi.fmt });
+      }
+    });
+  }
+
+  // Sort: red first, then amber, then green
+  const order = { red: 0, amber: 1, green: 2 };
+  alertItems.sort((a,b) => order[a.severity] - order[b.severity] || a.v - b.v);
+
+  const redCount = alertItems.filter(a => a.severity === 'red').length;
+  const amberCount = alertItems.filter(a => a.severity === 'amber').length;
+
+  if (countLabel) {
+    if (redCount > 0) countLabel.innerHTML = `<span class="alerts-badge">${redCount} alerta${redCount>1?'s':''} roja${redCount>1?'s':''}</span>`;
+    else if (amberCount > 0) countLabel.innerHTML = `<span class="alerts-badge" style="background:var(--amb-bg);color:var(--amber)">${amberCount} atención</span>`;
+    else countLabel.innerHTML = `<span class="alerts-badge ok">Todo OK</span>`;
+  }
+
+  el.innerHTML = '';
+  const header = document.createElement('div');
+  header.className = 'alerts-header';
+  header.innerHTML = `<div class="alerts-header-title">
+    ${redCount > 0 ? '⚠' : amberCount > 0 ? '⚡' : '✓'} 
+    ${alertItems.length === 0 ? 'Sin alertas activas' : `${alertItems.length} variación${alertItems.length>1?'es':''} significativa${alertItems.length>1?'s':''} vs mes anterior`}
+  </div>`;
+  el.appendChild(header);
+
+  if (alertItems.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'alerts-empty';
+    empty.textContent = `✓ Todas las métricas estables en ${MONTHS[mi]}`;
+    el.appendChild(empty);
+    return;
+  }
+
+  alertItems.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'alert-item';
+    const icon = a.severity === 'red' ? '▼' : a.severity === 'amber' ? '▼' : '▲';
+    const sign = a.v > 0 ? '+' : '';
+    row.innerHTML = `
+      <div class="alert-dot ${a.severity}"></div>
+      <div class="alert-net ${a.cls}">${a.netLabel}</div>
+      <div class="alert-kpi">${a.kpiLabel}</div>
+      <div class="alert-val ${a.severity === 'green' ? 'green' : a.severity}">${icon} ${sign}${a.v.toFixed(1)}% · ${fmt(a.c, a.fmt)}</div>`;
+    el.appendChild(row);
+  });
+}
+
+// ─── GOALS SECTION ────────────────────────────────────────────
+function getGoals() {
+  if (!D.__goals) D.__goals = JSON.parse(JSON.stringify(DEFAULT_GOALS));
+  return D.__goals;
+}
+
+function renderGoals() {
+  const el = document.getElementById('goalsGrid');
+  if (!el) return;
+  el.innerHTML = '';
+  const goals = getGoals();
+  const mi    = parseInt(document.getElementById('dashMonth').value);
+
+  for (const [nid, cfg] of Object.entries(NETS)) {
+    const netGoals = goals[nid] || {};
+    let kpisHtml = '';
+    cfg.kpis.forEach(kpi => {
+      if (kpi.fmt === 'pct') return;
+      const goalVal = netGoals[kpi.id] ?? null;
+      const actual  = (D[nid]?.[kpi.id] || [])[mi] ?? null;
+      const pct     = (goalVal && actual != null) ? Math.min(100, (actual/goalVal*100)) : null;
+      const barColor = pct === null ? '#e2e8f0' : pct >= 100 ? '#16a34a' : pct >= 70 ? '#d97706' : '#dc2626';
+      const inputVal = goalVal !== null
+        ? (kpi.fmt === 'pct' ? (goalVal*100).toFixed(2) : goalVal)
+        : '';
+      kpisHtml += `
+        <div class="goal-kpi-row">
+          <div class="goal-kpi-name">${kpi.label}</div>
+          <input class="goal-input" type="number" min="0"
+            step="${kpi.fmt === 'pct' ? '0.1' : '1000'}"
+            data-gnet="${nid}" data-gkpi="${kpi.id}" data-gfmt="${kpi.fmt}"
+            value="${inputVal}" placeholder="—"
+            title="Meta mensual para ${kpi.label}">
+        </div>
+        ${pct !== null ? `<div class="goal-progress-wrap"><div class="goal-progress-bar" style="width:${pct.toFixed(0)}%;background:${barColor}"></div></div>` : ''}`;
+    });
+    const card = document.createElement('div');
+    card.className = 'goal-card';
+    card.innerHTML = `
+      <div class="goal-card-net ${cfg.cls}">${cfg.icon} ${cfg.label}</div>
+      ${kpisHtml}`;
+    el.appendChild(card);
+  }
+
+  // Bind goal inputs
+  el.querySelectorAll('.goal-input').forEach(inp => {
+    inp.addEventListener('change', onGoalChange);
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') e.target.blur(); });
+  });
+}
+
+function onGoalChange(e) {
+  const { gnet, gkpi, gfmt } = e.target.dataset;
+  const raw = e.target.value.trim();
+  let val = null;
+  if (raw !== '') {
+    const n = parseFloat(raw);
+    if (!isNaN(n)) val = gfmt === 'pct' ? n/100 : n;
+  }
+  if (!D.__goals) D.__goals = JSON.parse(JSON.stringify(DEFAULT_GOALS));
+  if (!D.__goals[gnet]) D.__goals[gnet] = {};
+  D.__goals[gnet][gkpi] = val;
+  markChanged();
+  // Re-render progress bars only
+  renderGoals();
+}
+
+function buildSummary(mi, pi) {
+  return Object.entries(NETS).map(([nid, cfg]) => {
+    const lines = cfg.kpis.map(kpi => {
+      const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+      const c = arr[mi] ?? null;
+      const p = pi !== null ? (arr[pi] ?? null) : null;
+      const v = vari(c, p);
+      const vt = v !== null ? ` (${v > 0 ? '+' : ''}${v.toFixed(1)}% vs ${MONTHS[pi]})` : '';
+      return `  ${kpi.label}: ${c !== null ? (kpi.fmt === 'pct' ? (c*100).toFixed(2)+'%' : c.toLocaleString()) : 'Sin dato'}${c !== null ? vt : ''}`;
+    });
+    return `${cfg.label}:\n${lines.join('\n')}`;
+  }).join('\n\n');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+(async function init() {
+  // Show a subtle loading state while fetching from Supabase
+  const content = document.querySelector('.content');
+  if (content) content.style.opacity = '0.5';
+  try {
+    D = await loadData();
+  } catch(e) {
+    console.error('init loadData failed:', e);
+    D = JSON.parse(JSON.stringify(SEED));
+  }
+  if (content) content.style.opacity = '1';
+  buildSidebarSubs();
+  bindAllNav();
+  renderDash();
+})();
+</script>
+</body>
+</html>
