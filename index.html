@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 /* ─── RESET ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,12 +62,14 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .nav-btn[data-tab="facebook"].active  { background: #eff6ff; color: var(--fb); }
 .nav-btn[data-tab="tiktok"].active    { background: #f0fdfa; color: var(--tt); }
 .nav-btn[data-tab="x"].active         { background: #f8fafc; color: var(--xc); }
+.nav-btn[data-tab="grilla"].active    { background: #f0fdfa; color: #0d9488; }
 .nav-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; opacity: .9; }
 .nav-btn[data-tab="dashboard"] .nav-dot { background: var(--dash); }
 .nav-btn[data-tab="instagram"] .nav-dot { background: var(--ig); }
 .nav-btn[data-tab="facebook"]  .nav-dot { background: var(--fb); }
 .nav-btn[data-tab="tiktok"]    .nav-dot { background: var(--tt); }
 .nav-btn[data-tab="x"]         .nav-dot { background: #9ca3af; }
+.nav-btn[data-tab="grilla"]    .nav-dot { background: #0d9488; }
 
 /* Sub-menu for KPIs inside sidebar */
 .nav-sub { display: none; padding-left: 26px; margin-bottom: 4px; }
@@ -326,6 +331,116 @@ table.dt tbody tr:hover td { background: #fafbfc; }
 .goal-progress-wrap { margin-top:5px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
 .goal-progress-bar  { height:100%; border-radius:2px; transition:width .4s ease; }
 
+
+/* ─── GRILLA (CALENDARIO) ───────────────────────────────── */
+.grilla-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+.grilla-nav { display:flex; align-items:center; gap:8px; }
+.grilla-nav-btn { width:32px; height:32px; border-radius:8px; border:1px solid var(--border2); background:var(--card); color:var(--text2); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+.grilla-nav-btn:hover { background:var(--bg); color:var(--text); }
+.grilla-month-title { font-size:16px; font-weight:700; color:var(--text); letter-spacing:-.01em; min-width:180px; text-align:center; }
+.grilla-month-select { background:var(--card); border:1px solid var(--border2); color:var(--text); padding:6px 28px 6px 10px; border-radius:8px; font-size:12.5px; font-weight:500; cursor:pointer; outline:none; font-family:var(--font); appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; }
+.grilla-legend { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.grilla-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted2); }
+.grilla-legend-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+/* Calendar grid */
+.cal-grid { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); overflow:hidden; box-shadow:var(--sh); }
+.cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); background:var(--card2); border-bottom:1px solid var(--border); }
+.cal-weekday { padding:8px 6px; text-align:center; font-size:10.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+.cal-weekday.weekend { color:var(--red); }
+.cal-days { display:grid; grid-template-columns:repeat(7,1fr); }
+.cal-day { min-height:110px; border-right:1px solid var(--border); border-bottom:1px solid var(--border); padding:6px 7px; position:relative; transition:background .1s; }
+.cal-day:nth-child(7n) { border-right:none; }
+.cal-day.empty { background:var(--bg); opacity:.4; }
+.cal-day.today { background:#eff6ff; }
+.cal-day.holiday { background:#fef2f2; }
+.cal-day.weekend-day { background:#fafafa; }
+.cal-day:hover:not(.empty) { background:#f8fafc; cursor:pointer; }
+.cal-day-num { font-size:12px; font-weight:700; color:var(--text2); margin-bottom:3px; display:flex; align-items:center; gap:4px; }
+.cal-day-num.holiday-num { color:var(--red); }
+.cal-day-num.today-num { background:var(--accent); color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; }
+.cal-holiday-badge { font-size:9px; font-weight:600; color:var(--red); background:#fecaca; padding:1px 5px; border-radius:3px; }
+/* Events inside day */
+.cal-events { display:flex; flex-direction:column; gap:2px; }
+.cal-event { font-size:9.5px; padding:2px 5px; border-radius:3px; cursor:pointer; line-height:1.3; border-left:2px solid transparent; transition:opacity .1s; }
+.cal-event:hover { opacity:.8; }
+.cal-event.efemeride { background:#fef3c7; border-left-color:#f59e0b; color:#78350f; }
+.cal-event.publicacion { border-left-color:#2563eb; color:#1e40af; }
+.cal-event.publicacion.ig { background:#fff0f6; border-left-color:var(--ig); color:#831843; }
+.cal-event.publicacion.fb { background:#eff6ff; border-left-color:var(--fb); color:#1e3a8a; }
+.cal-event.publicacion.tt { background:#f0fdfa; border-left-color:var(--tt); color:#134e4a; }
+.cal-event.publicacion.x  { background:#f9fafb; border-left-color:#6b7280; color:#374151; }
+.cal-event.publicacion.general { background:#f0f9ff; border-left-color:#0ea5e9; color:#0c4a6e; }
+.cal-add-btn { margin-top:2px; font-size:9px; color:var(--muted); opacity:0; transition:opacity .15s; cursor:pointer; display:flex; align-items:center; gap:2px; }
+.cal-day:hover .cal-add-btn { opacity:1; }
+/* Modal */
+.grilla-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:500; align-items:center; justify-content:center; }
+.grilla-modal-overlay.open { display:flex; }
+.grilla-modal { background:var(--card); border-radius:var(--rl); padding:22px 24px; width:420px; max-width:94vw; box-shadow:0 20px 50px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
+.gm-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.gm-date  { font-size:12px; color:var(--muted); margin-bottom:16px; }
+.gm-section { font-size:10.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:7px; margin-top:14px; }
+.gm-textarea { width:100%; border:1px solid var(--border2); border-radius:8px; padding:9px 11px; font-size:12.5px; font-family:var(--font); resize:vertical; min-height:64px; outline:none; color:var(--text); background:var(--card); transition:border-color .12s; }
+.gm-textarea:focus { border-color:var(--accent); }
+.gm-select { width:100%; border:1px solid var(--border2); border-radius:8px; padding:8px 11px; font-size:12.5px; font-family:var(--font); outline:none; color:var(--text); background:var(--card); cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+.gm-actions { display:flex; justify-content:space-between; align-items:center; margin-top:18px; gap:8px; }
+.gm-delete { color:var(--red); font-size:12px; cursor:pointer; background:none; border:none; font-family:var(--font); padding:4px 8px; border-radius:6px; transition:background .12s; }
+.gm-delete:hover { background:var(--red-bg); }
+/* Engagement rate indicator */
+.er-indicator { display:flex; align-items:center; gap:8px; margin-top:6px; padding:8px 10px; border-radius:8px; font-size:11px; }
+.er-indicator.excelente { background:#f0fdf4; border:1px solid #bbf7d0; color:#14532d; }
+.er-indicator.bueno     { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; }
+.er-indicator.optimo    { background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; }
+.er-indicator.regular   { background:#fffbeb; border:1px solid #fde68a; color:#78350f; }
+.er-indicator.bajo      { background:#fef2f2; border:1px solid #fecaca; color:#7f1d1d; }
+.er-dot-lg { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+/* Engagement help panel */
+.er-help-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); padding:16px 18px; margin-top:4px; box-shadow:var(--sh); }
+.er-help-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:10px; }
+.er-scale { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.er-scale-row { display:flex; align-items:center; gap:10px; font-size:12px; }
+.er-scale-bar { height:10px; border-radius:5px; flex-shrink:0; }
+.er-scale-label { min-width:70px; font-weight:600; }
+.er-scale-range { color:var(--muted2); }
+.er-scale-desc  { color:var(--muted); font-size:11px; }
+.er-tips { border-top:1px solid var(--border); padding-top:12px; margin-top:4px; }
+.er-tips-title { font-size:11.5px; font-weight:600; color:var(--text2); margin-bottom:8px; }
+.er-tip-item { display:flex; gap:7px; font-size:11.5px; color:var(--text2); line-height:1.5; margin-bottom:5px; }
+.er-tip-icon { flex-shrink:0; }
+/* Analysis form */
+.analysis-form { background:var(--card2); border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; margin-top:4px; }
+.af-label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:7px; }
+.af-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+@media(max-width:500px){ .af-row { grid-template-columns:1fr; } }
+.af-field label { font-size:11px; color:var(--muted2); display:block; margin-bottom:3px; }
+.af-input { width:100%; border:1px solid var(--border2); border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:var(--font); outline:none; color:var(--text); background:var(--card); }
+.af-input:focus { border-color:var(--accent); }
+.af-result { margin-top:10px; padding:12px; background:var(--card); border:1px solid var(--border); border-radius:8px; font-size:12.5px; color:var(--text2); line-height:1.7; white-space:pre-wrap; display:none; }
+.af-result.vis { display:block; }
+@media(max-width:700px){
+  .cal-day { min-height:70px; font-size:9px; }
+  .grilla-legend { display:none; }
+  .smart-row { grid-template-columns:1fr; }
+  .er-scale-row { flex-wrap:wrap; }
+  .er-scale-desc { width:100%; font-size:10px; }
+  .af-row { grid-template-columns:1fr; }
+  .analysis-form { padding:10px; }
+  .ph { flex-direction:column; gap:8px; }
+  .ph-actions { flex-wrap:wrap; width:100%; }
+  .ph-actions .msel { flex:1; min-width:120px; }
+  .ph-actions .btn { flex:1; justify-content:center; min-width:70px; font-size:11px; }
+  .kpi-acc-summary { display:none; }
+  table.dt td, table.dt th { padding:6px 8px; font-size:11px; }
+  .ei { width:100px; font-size:12px; }
+  .grilla-modal { width:96vw; padding:14px; }
+}
+@media(max-width:480px){
+  .kpi-row { grid-template-columns:1fr; }
+  .kc-val { font-size:20px; }
+  .totals-row { grid-template-columns:1fr 1fr; }
+  .goals-grid { grid-template-columns:1fr 1fr; }
+  .dash-grid { grid-template-columns:1fr 1fr; }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -336,7 +451,7 @@ table.dt tbody tr:hover td { background: #fafbfc; }
 <aside class="sidebar" id="sidebar">
   <div class="sb-logo">
     <div class="sb-logo-inner">
-      <div class="sb-icon">MV</div>
+      <img src="data:image/png;base64,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" alt="MINVU" style="width:34px;height:34px;border-radius:50%;object-fit:contain;flex-shrink:0;">
       <div><div class="sb-name">MINVU</div><div class="sb-sub">Redes Sociales 2026</div></div>
     </div>
   </div>
@@ -344,7 +459,10 @@ table.dt tbody tr:hover td { background: #fafbfc; }
   <div class="sb-section">
     <span class="sb-sec-lbl">General</span>
     <button class="nav-btn active" data-tab="dashboard">
-      <span class="nav-dot"></span>Dashboard
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+    </button>
+    <button class="nav-btn" data-tab="grilla">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="4" x2="8" y2="22"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="3" y1="19" x2="21" y2="19"/><line x1="13" y1="4" x2="13" y2="22"/></svg>Grilla 2026
     </button>
   </div>
 
@@ -353,25 +471,25 @@ table.dt tbody tr:hover td { background: #fafbfc; }
 
     <!-- Each network nav: main button + sub-items -->
     <button class="nav-btn" data-tab="instagram">
-      <span class="nav-dot"></span>Instagram
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg>Instagram
       <span class="nav-chevron">›</span>
     </button>
     <div class="nav-sub" id="sub-instagram"></div>
 
     <button class="nav-btn" data-tab="facebook">
-      <span class="nav-dot"></span>Facebook
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="flex-shrink:0"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>Facebook
       <span class="nav-chevron">›</span>
     </button>
     <div class="nav-sub" id="sub-facebook"></div>
 
     <button class="nav-btn" data-tab="tiktok">
-      <span class="nav-dot"></span>TikTok
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="flex-shrink:0"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.07a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.5z"/></svg>TikTok
       <span class="nav-chevron">›</span>
     </button>
     <div class="nav-sub" id="sub-tiktok"></div>
 
     <button class="nav-btn" data-tab="x">
-      <span class="nav-dot"></span>X
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="flex-shrink:0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X
       <span class="nav-chevron">›</span>
     </button>
     <div class="nav-sub" id="sub-x"></div>
@@ -383,17 +501,18 @@ table.dt tbody tr:hover td { background: #fafbfc; }
   </div>
 </aside>
 
-<!-- MOBILE NAV -->
-<div class="mob-nav" id="mobNav">
-  <button class="nav-btn active" data-tab="dashboard"><span class="nav-dot"></span>Dashboard</button>
-  <button class="nav-btn" data-tab="instagram"><span class="nav-dot"></span>Instagram</button>
-  <button class="nav-btn" data-tab="facebook"><span class="nav-dot"></span>Facebook</button>
-  <button class="nav-btn" data-tab="tiktok"><span class="nav-dot"></span>TikTok</button>
-  <button class="nav-btn" data-tab="x"><span class="nav-dot"></span>X</button>
-</div>
 
 <!-- ═══ MAIN ═══════════════════════════════════════════════ -->
 <div class="main">
+<!-- MOBILE NAV — inside main so it stacks above topbar -->
+<div class="mob-nav" id="mobNav">
+  <button class="nav-btn active" data-tab="dashboard"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</button>
+  <button class="nav-btn" data-tab="grilla"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="4" x2="8" y2="22"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="3" y1="19" x2="21" y2="19"/><line x1="13" y1="4" x2="13" y2="22"/></svg>Grilla</button>
+  <button class="nav-btn" data-tab="instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg>Instagram</button>
+  <button class="nav-btn" data-tab="facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="flex-shrink:0"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>Facebook</button>
+  <button class="nav-btn" data-tab="tiktok"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="flex-shrink:0"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.07a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.5z"/></svg>TikTok</button>
+  <button class="nav-btn" data-tab="x"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" style="flex-shrink:0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X</button>
+</div>
   <header class="topbar">
     <div class="tb-bc">MINVU <span class="sep">›</span> <span class="cur" id="tbCur">Dashboard</span></div>
     <div class="tb-right">
@@ -421,16 +540,10 @@ table.dt tbody tr:hover td { background: #fafbfc; }
             <option value="8">Septiembre</option><option value="9">Octubre</option>
             <option value="10">Noviembre</option><option value="11">Diciembre</option>
           </select>
-          <button class="btn btn-ai" id="aiBtn">
-            <span class="ai-ico">✦</span><span class="sp"></span>Análisis IA
-          </button>
+
         </div>
       </div>
-      <div class="ai-panel" id="aiPanel">
-        <div class="aip-head">✦ Diagnóstico IA — <span id="aiMon"></span></div>
-        <div class="aip-body" id="aiBody"></div>
-        <div class="aip-foot" id="aiFoot"></div>
-      </div>
+      
       <!-- Smart metrics: engagement rate, best month, ecosystem growth -->
       <div class="slabel">Métricas clave del ecosistema</div>
       <div class="smart-row" id="smartRow"></div>
@@ -465,7 +578,22 @@ table.dt tbody tr:hover td { background: #fafbfc; }
       <div class="ph">
         <div>
           <div class="ph-title" style="color:var(--ig)">Instagram</div>
-          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes · <a href="https://www.instagram.com/minvuchile/" target="_blank" rel="noopener" style="color:var(--ig);font-weight:600;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">@minvuchile ↗</a></div>
+        </div>
+        <div class="ph-actions">
+          <select class="msel" id="pdfMonth-instagram">
+            <option value="0">Enero</option><option value="1">Febrero</option>
+            <option value="2" selected>Marzo</option><option value="3">Abril</option>
+            <option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option>
+            <option value="8">Septiembre</option><option value="9">Octubre</option>
+            <option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+          <button class="btn btn-g" onclick="exportPDF('instagram')" title="Exportar resumen PDF">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            PDF
+          </button>
+
         </div>
       </div>
       <!-- KPI summary cards — DO NOT REMOVE -->
@@ -483,7 +611,22 @@ table.dt tbody tr:hover td { background: #fafbfc; }
       <div class="ph">
         <div>
           <div class="ph-title" style="color:var(--fb)">Facebook</div>
-          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes · <a href="https://web.facebook.com/MinvuChile/" target="_blank" rel="noopener" style="color:var(--fb);font-weight:600;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">MinvuChile ↗</a></div>
+        </div>
+        <div class="ph-actions">
+          <select class="msel" id="pdfMonth-facebook">
+            <option value="0">Enero</option><option value="1">Febrero</option>
+            <option value="2" selected>Marzo</option><option value="3">Abril</option>
+            <option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option>
+            <option value="8">Septiembre</option><option value="9">Octubre</option>
+            <option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+          <button class="btn btn-g" onclick="exportPDF('facebook')" title="Exportar resumen PDF">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            PDF
+          </button>
+
         </div>
       </div>
       <div class="kpi-row" id="facebook-krow"></div>
@@ -498,7 +641,22 @@ table.dt tbody tr:hover td { background: #fafbfc; }
       <div class="ph">
         <div>
           <div class="ph-title" style="color:var(--tt)">TikTok</div>
-          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes · <a href="https://www.tiktok.com/@minvuchile" target="_blank" rel="noopener" style="color:var(--tt);font-weight:600;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">@minvuchile ↗</a></div>
+        </div>
+        <div class="ph-actions">
+          <select class="msel" id="pdfMonth-tiktok">
+            <option value="0">Enero</option><option value="1">Febrero</option>
+            <option value="2" selected>Marzo</option><option value="3">Abril</option>
+            <option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option>
+            <option value="8">Septiembre</option><option value="9">Octubre</option>
+            <option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+          <button class="btn btn-g" onclick="exportPDF('tiktok')" title="Exportar resumen PDF">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            PDF
+          </button>
+
         </div>
       </div>
       <div class="kpi-row" id="tiktok-krow"></div>
@@ -513,7 +671,22 @@ table.dt tbody tr:hover td { background: #fafbfc; }
       <div class="ph">
         <div>
           <div class="ph-title">𝕏 (Twitter)</div>
-          <div class="ph-sub">4 KPIs · datos editables por mes</div>
+          <div class="ph-sub">4 KPIs · datos editables por mes · <a href="https://x.com/Minvu" target="_blank" rel="noopener" style="color:#374151;font-weight:600;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">@Minvu ↗</a></div>
+        </div>
+        <div class="ph-actions">
+          <select class="msel" id="pdfMonth-x">
+            <option value="0">Enero</option><option value="1">Febrero</option>
+            <option value="2" selected>Marzo</option><option value="3">Abril</option>
+            <option value="4">Mayo</option><option value="5">Junio</option>
+            <option value="6">Julio</option><option value="7">Agosto</option>
+            <option value="8">Septiembre</option><option value="9">Octubre</option>
+            <option value="10">Noviembre</option><option value="11">Diciembre</option>
+          </select>
+          <button class="btn btn-g" onclick="exportPDF('x')" title="Exportar resumen PDF">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            PDF
+          </button>
+
         </div>
       </div>
       <div class="kpi-row" id="x-krow"></div>
@@ -523,7 +696,68 @@ table.dt tbody tr:hover td { background: #fafbfc; }
       <div class="kpi-accordion" id="x-tables"></div>
     </div>
 
+
+    <!-- ══ GRILLA ══════════════════════════════════════════ -->
+    <div class="page" id="page-grilla">
+      <div class="ph">
+        <div>
+          <div class="ph-title" style="color:#0d9488">Grilla de Contenidos 2026</div>
+          <div class="ph-sub">Calendario editorial · efemérides · programación de publicaciones</div>
+        </div>
+      </div>
+      <div class="grilla-header">
+        <div class="grilla-nav">
+          <button class="grilla-nav-btn" id="grillaMonthPrev">&#8249;</button>
+          <div class="grilla-month-title" id="grillaMonthTitle">Enero 2026</div>
+          <button class="grilla-nav-btn" id="grillaMonthNext">&#8250;</button>
+        </div>
+        <div class="grilla-legend">
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#f59e0b"></div>Efeméride</div>
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#e1306c"></div>Instagram</div>
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#1877f2"></div>Facebook</div>
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#00b2a9"></div>TikTok</div>
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#6b7280"></div>X</div>
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#0ea5e9"></div>General</div>
+          <div class="grilla-legend-item"><div class="grilla-legend-dot" style="background:#fecaca"></div>Feriado</div>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- ══ ENGAGEMENT PAGE ══════════════════════════════════ -->
+    <div class="page" id="page-engagement">
+      <!-- This page is never navigated to directly; engagement is shown inside X tab -->
+    </div>
   </div><!-- /content -->
+
+<!-- GRILLA MODAL -->
+<div class="grilla-modal-overlay" id="grillaModalOverlay">
+  <div class="grilla-modal">
+    <div class="gm-title" id="gmTitle">Editar día</div>
+    <div class="gm-date" id="gmDate"></div>
+    <div id="gmEfemeride" style="display:none;background:#fef3c7;border-radius:7px;padding:8px 10px;font-size:12px;color:#78350f;margin-bottom:10px;border-left:3px solid #f59e0b;"></div>
+    <div class="gm-section">Efeméride / Nota del día</div>
+    <textarea class="gm-textarea" id="gmEfTxt" placeholder="Efeméride o recordatorio del día (editable)..." rows="2"></textarea>
+    <div class="gm-section">Publicación programada</div>
+    <select class="gm-select" id="gmRed" style="margin-bottom:8px">
+      <option value="">— Seleccionar red social —</option>
+      <option value="ig">Instagram</option>
+      <option value="fb">Facebook</option>
+      <option value="tt">TikTok</option>
+      <option value="x">X</option>
+      <option value="general">Todas / General</option>
+    </select>
+    <textarea class="gm-textarea" id="gmPubTxt" placeholder="Descripción de la publicación. Ej: Reel — Entrega viviendas Talca..." rows="3"></textarea>
+    <div class="gm-actions">
+      <button class="gm-delete" id="gmDeleteBtn">🗑 Eliminar entradas</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g" id="gmCancelBtn">Cancelar</button>
+        <button class="btn btn-p" id="gmSaveBtn">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /main -->
 </div><!-- /shell -->
 
@@ -824,11 +1058,12 @@ function goTab(tab) {
   pg.classList.add('active');
 
   // Topbar breadcrumb
-  const labels = { dashboard:'Dashboard', instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', x:'X' };
+  const labels = { dashboard:'Dashboard', instagram:'Instagram', facebook:'Facebook', tiktok:'TikTok', x:'X', grilla:'Grilla 2026' };
   document.getElementById('tbCur').textContent = labels[tab] || tab;
 
   // Render content
   if (tab === 'dashboard') renderDash();
+  else if (tab === 'grilla') renderGrilla();
   else renderNet(tab);
 }
 
@@ -1079,6 +1314,12 @@ function renderNet(nid) {
     inp.addEventListener('change', onInputChange);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   });
+
+  // Engagement help panel for ALL network tabs
+  const helpCont = document.createElement('div');
+  helpCont.id = `${nid}-er-help`;
+  tablesEl.appendChild(helpCont);
+  renderEngagementHelp(`${nid}-er-help`, nid);
 }
 
 // ─── INPUT CHANGE HANDLER ─────────────────────────────────────
@@ -1158,6 +1399,7 @@ async function doSave() {
 
 async function doDiscard() {
   D = await loadData();
+  await grillaLoadFromCloud();
   changed = false;
   document.getElementById('uPill').classList.remove('show');
   document.getElementById('saveBar').classList.remove('vis');
@@ -1332,7 +1574,21 @@ function addCompareCard(container, cid, title, sub, netLabels, netArrays, colors
         },
         scales: {
           x: { ...CD.scales.x, ticks: { color:'#94a3b8', font:{size:11} } },
-          y: { ...CD.scales.y, ticks: { ...CD.scales.y.ticks, callback: v => fmt(v) } }
+          y: {
+            ...CD.scales.y,
+            type: 'logarithmic',
+            ticks: {
+              ...CD.scales.y.ticks,
+              callback: v => {
+                // Only show clean tick values on log scale
+                const log = Math.log10(v);
+                if (Number.isInteger(log) || (v >= 1000 && v % 1000 === 0) || (v >= 1000000 && v % 1000000 === 0)) {
+                  return fmt(v);
+                }
+                return null;
+              }
+            }
+          }
         }
       }
     });
@@ -1340,69 +1596,7 @@ function addCompareCard(container, cid, title, sub, netLabels, netArrays, colors
 }
 
 // ─── AI ANALYSIS ──────────────────────────────────────────────
-document.getElementById('aiBtn').addEventListener('click', async () => {
-  const btn   = document.getElementById('aiBtn');
-  const panel = document.getElementById('aiPanel');
-  const body  = document.getElementById('aiBody');
-  const foot  = document.getElementById('aiFoot');
-  const mi    = parseInt(document.getElementById('dashMonth').value);
-  const pi    = mi > 0 ? mi - 1 : null;
-
-  btn.classList.add('loading'); btn.disabled = true;
-  panel.classList.add('vis');
-  document.getElementById('aiMon').textContent = MONTHS[mi];
-  body.innerHTML = '<span style="color:var(--muted)">Analizando datos del mes...</span>';
-  foot.textContent = '';
-
-  const summary = buildSummary(mi, pi);
-
-  try {
-    const res = await fetch('/.netlify/functions/ai-proxy', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        system: `Eres el Community Manager del MINVU (Ministerio de Vivienda y Urbanismo de Chile).
-Experto en análisis de redes sociales institucionales.
-Responde SIEMPRE en español. Sé concreto y directo.
-Estructura tu respuesta así:
-1) Resumen ejecutivo (2 oraciones clave).
-2) Destacados por red (un punto por red: dato más relevante y su variación).
-3) Acciones recomendadas (máximo 3 puntos concretos).
-Máximo 260 palabras. Usa emojis con moderación.`,
-        messages: [{
-          role: 'user',
-          content: `Analiza el rendimiento MINVU en ${MONTHS[mi]} 2026${pi !== null ? ` vs ${MONTHS[pi]}` : ''}:\n\n${summary}`
-        }]
-      })
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error?.message || `HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    const text = data.content?.[0]?.text;
-    if (!text) throw new Error('Respuesta vacía del servidor');
-    body.textContent = text;
-    foot.textContent = `Generado el ${new Date().toLocaleString('es-CL')}`;
-
-  } catch(err) {
-    let msg = err.message;
-    if (msg.includes('401') || msg.includes('api_key') || msg.includes('authentication')) {
-      msg = 'API key no válida. Ve a Netlify → Site → Environment variables y agrega ANTHROPIC_API_KEY.';
-    } else if (msg.includes('500') || msg.includes('proxy')) {
-      msg = 'Error en el servidor proxy. Verifica que ANTHROPIC_API_KEY esté configurada en Netlify.';
-    }
-    body.innerHTML = `<span class="ai-err">⚠ ${msg}</span>\n\n<span style="color:var(--muted);font-size:12px">Resumen de datos (${MONTHS[mi]}):\n${summary}</span>`;
-  } finally {
-    btn.classList.remove('loading'); btn.disabled = false;
-  }
-});
+;
 
 
 // ─── SMART METRICS ────────────────────────────────────────────
@@ -1660,6 +1854,537 @@ function onGoalChange(e) {
   renderGoals();
 }
 
+// ─── GRILLA + ENGAGEMENT JS ─────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// CHILE 2026 FERIADOS (Ley 19.973 + Ley 20.215)
+// ══════════════════════════════════════════════════════════════
+const FERIADOS_2026 = {
+  '2026-01-01': 'Año Nuevo',
+  '2026-04-03': 'Viernes Santo',
+  '2026-04-04': 'Sábado Santo',
+  '2026-05-01': 'Día del Trabajo',
+  '2026-05-21': 'Día de las Glorias Navales',
+  '2026-06-29': 'San Pedro y San Pablo',
+  '2026-07-16': 'Virgen del Carmen',
+  '2026-08-15': 'Asunción de la Virgen',
+  '2026-09-18': 'Independencia Nacional',
+  '2026-09-19': 'Día de las Glorias del Ejército',
+  '2026-10-12': 'Encuentro de Dos Mundos',
+  '2026-10-31': 'Día de las Iglesias Evangélicas',
+  '2026-11-01': 'Día de Todos los Santos',
+  '2026-11-07': 'Elecciones (tentativo)',
+  '2026-12-08': 'Inmaculada Concepción',
+  '2026-12-25': 'Navidad',
+};
+
+// ══════════════════════════════════════════════════════════════
+// EFEMÉRIDES 2026 — Relacionadas con MINVU, Chile, cultura
+// ══════════════════════════════════════════════════════════════
+const EFEMERIDES_SEED = {
+  '2026-01-01': 'Año Nuevo · Inicio de año MINVU 2026',
+  '2026-01-15': 'Día Mundial del Hábitat y la Vivienda (ONU)',
+  '2026-02-14': 'Día de San Valentín',
+  '2026-03-08': 'Día Internacional de la Mujer',
+  '2026-03-20': 'Equinoccio de otoño / Inicio del otoño en Chile',
+  '2026-03-22': 'Día Mundial del Agua',
+  '2026-03-27': 'Día del Teatro Chileno',
+  '2026-04-02': 'Día Mundial del Autismo',
+  '2026-04-18': 'Semana de la Arquitectura (Col. de Arquitectos)',
+  '2026-04-22': 'Día de la Tierra',
+  '2026-04-26': 'Día Internacional del Diseño',
+  '2026-05-01': 'Día Internacional del Trabajo',
+  '2026-05-10': 'Día de la Madre (Chile)',
+  '2026-05-15': 'Día Internacional de la Familia',
+  '2026-05-17': 'Día de las Telecomunicaciones',
+  '2026-05-18': 'Día Internacional de los Museos / Patrimonio',
+  '2026-05-20': 'Día del Secretario / Asistente Administrativo',
+  '2026-05-31': 'Día sin Tabaco',
+  '2026-06-05': 'Día Mundial del Medio Ambiente',
+  '2026-06-08': 'Día Mundial de los Océanos',
+  '2026-06-18': 'Día del Padre (Chile)',
+  '2026-06-21': 'Día Nacional de los Pueblos Indígenas / We Tripantu',
+  '2026-06-27': 'Día del Arquitecto (Chile)',
+  '2026-07-04': 'Día del Urbanismo (Chile)',
+  '2026-07-16': 'Día de la Virgen del Carmen / Fiestas Patrias pronto',
+  '2026-07-25': 'Día del Periodista (Chile)',
+  '2026-08-09': 'Día Internacional de los Pueblos Indígenas (ONU)',
+  '2026-08-12': 'Día Internacional de la Juventud',
+  '2026-08-23': 'Día de la Mujer Indígena',
+  '2026-09-04': 'Aniversario Terremoto 1906 — Día de la Prevención',
+  '2026-09-18': 'Fiestas Patrias — Independencia de Chile',
+  '2026-09-19': 'Día de las Glorias del Ejército',
+  '2026-09-23': 'Día del Asistente Social (Chile)',
+  '2026-10-01': 'Día Internacional del Adulto Mayor',
+  '2026-10-05': 'Día Mundial del Hábitat (ONU)',
+  '2026-10-12': 'Día del Encuentro de Dos Mundos / Pueblos Originarios',
+  '2026-10-14': 'Día del Dirigente Social y Vecinal',
+  '2026-10-15': 'Día Mundial del Lavado de Manos / Higiene Hábitat',
+  '2026-10-16': 'Día Mundial de la Alimentación',
+  '2026-10-17': 'Día Internacional para la Erradicación de la Pobreza',
+  '2026-10-19': 'Día del Ingeniero (Chile)',
+  '2026-10-20': 'Día de la Ciudad (ONU-Hábitat)',
+  '2026-11-01': 'Día de Todos los Santos',
+  '2026-11-06': 'Día del Periodista (APC)',
+  '2026-11-19': 'Día del Hombre',
+  '2026-11-25': 'Día Internacional contra la Violencia hacia la Mujer',
+  '2026-12-01': 'Día Mundial del SIDA',
+  '2026-12-10': 'Día Internacional de los Derechos Humanos',
+  '2026-12-18': 'Día Internacional del Migrante',
+  '2026-12-25': 'Navidad',
+  // Patrimonio y cultura
+  '2026-04-01': 'Día del Libro Chileno',
+  '2026-05-30': 'Día del Patrimonio Cultural de Chile (últ. dom. mayo)',
+  '2026-06-07': 'Día de la Bandera de Chile',
+  '2026-07-20': 'Día del Parque Nacional (Chile)',
+  '2026-08-01': 'Día de la Naturaleza / Flora y Fauna Nativa',
+  '2026-09-01': 'Día de los Árboles y del Bosque Nativo',
+  '2026-10-02': 'Día de la Niñez y la Adolescencia',
+};
+
+// ══════════════════════════════════════════════════════════════
+// GRILLA STATE
+// ══════════════════════════════════════════════════════════════
+let grillaMonth = 0; // 0 = January 2026
+let grillaData = {};   // key: 'YYYY-MM-DD', value: { ef:'...', red:'ig', pub:'...' }
+let grillaEditingDate = null;
+const GRILLA_SK = 'minvu_grilla_2026_v1';
+
+function grillaLoadFromStorage() {
+  try {
+    const raw = localStorage.getItem(GRILLA_SK);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Merge with efemerides seed (stored overrides seed)
+      grillaData = parsed;
+      // Ensure seed efemerides that haven't been edited are shown
+      for (const [date, ef] of Object.entries(EFEMERIDES_SEED)) {
+        if (!grillaData[date]) grillaData[date] = { ef, red:'', pub:'' };
+        else if (grillaData[date].ef === undefined) grillaData[date].ef = ef;
+      }
+      return;
+    }
+  } catch(e) {}
+  // Init from seed
+  grillaData = {};
+  for (const [date, ef] of Object.entries(EFEMERIDES_SEED)) {
+    grillaData[date] = { ef, red:'', pub:'' };
+  }
+}
+
+async function grillaSave() {
+  // Save to localStorage
+  try { localStorage.setItem(GRILLA_SK, JSON.stringify(grillaData)); } catch(e) {}
+  // Save to Supabase in a separate row (key='grilla')
+  try {
+    await sbClient.from('minvu_data').upsert(
+      { id: 'grilla', payload: grillaData },
+      { onConflict: 'id' }
+    );
+  } catch(e) { console.warn('Grilla Supabase save error:', e); }
+}
+
+async function grillaLoadFromCloud() {
+  try {
+    const { data, error } = await sbClient
+      .from('minvu_data').select('payload').eq('id','grilla').maybeSingle();
+    if (!error && data && data.payload) {
+      grillaData = data.payload;
+      // Ensure seed efemerides not overwritten
+      for (const [date, ef] of Object.entries(EFEMERIDES_SEED)) {
+        if (!grillaData[date]) grillaData[date] = { ef, red:'', pub:'' };
+        else if (grillaData[date].ef === undefined) grillaData[date].ef = ef;
+      }
+      try { localStorage.setItem(GRILLA_SK, JSON.stringify(grillaData)); } catch(e) {}
+      return;
+    }
+  } catch(e) {}
+  grillaLoadFromStorage();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER CALENDAR
+// ══════════════════════════════════════════════════════════════
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function renderGrilla() {
+  const year = 2026, month = grillaMonth;
+  const title = document.getElementById('grillaMonthTitle');
+  if (title) title.textContent = `${MONTHS_ES[month]} 2026`;
+
+  const grid = document.getElementById('calGrid');
+  if (!grid) return;
+
+  // Weekday headers
+  let html = '<div class="cal-weekdays">';
+  DIAS.forEach((d, i) => {
+    const isWeekend = i === 0 || i === 6;
+    html += `<div class="cal-weekday${isWeekend ? ' weekend' : ''}">${d}</div>`;
+  });
+  html += '</div><div class="cal-days">';
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div class="cal-day empty"></div>';
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayOfWeek = new Date(year, month, d).getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isFeriado = !!FERIADOS_2026[dateStr];
+    const isToday   = dateStr === todayStr;
+
+    let cls = 'cal-day';
+    if (isFeriado) cls += ' holiday';
+    else if (isWeekend) cls += ' weekend-day';
+    if (isToday) cls += ' today';
+
+    const entry = grillaData[dateStr] || {};
+    const feriadoName = FERIADOS_2026[dateStr] || '';
+
+    // Day number
+    let numHtml = '';
+    if (isToday) {
+      numHtml = `<div class="cal-day-num"><span class="cal-day-num today-num">${d}</span></div>`;
+    } else {
+      numHtml = `<div class="cal-day-num${isFeriado ? ' holiday-num' : ''}">${d}${isFeriado ? `<span class="cal-holiday-badge">F</span>` : ''}</div>`;
+    }
+
+    // Events
+    let eventsHtml = '<div class="cal-events">';
+    if (feriadoName) {
+      eventsHtml += `<div class="cal-event efemeride" title="${feriadoName}" style="background:#fee2e2;border-left-color:#ef4444;color:#7f1d1d;">🇨🇱 ${feriadoName}</div>`;
+    }
+    if (entry.ef && entry.ef !== feriadoName) {
+      const shortEf = entry.ef.length > 40 ? entry.ef.slice(0,38)+'…' : entry.ef;
+      eventsHtml += `<div class="cal-event efemeride" title="${entry.ef}">📅 ${shortEf}</div>`;
+    }
+    if (entry.pub) {
+      const redCls = entry.red || 'general';
+      const redIcon = {ig:'📸',fb:'👥',tt:'🎵',x:'✕',general:'📢'}[redCls] || '📢';
+      const shortPub = entry.pub.length > 40 ? entry.pub.slice(0,38)+'…' : entry.pub;
+      eventsHtml += `<div class="cal-event publicacion ${redCls}" title="${entry.pub}">${redIcon} ${shortPub}</div>`;
+    }
+    eventsHtml += `<div class="cal-add-btn" onclick="openGrillaModal('${dateStr}')">＋ Agregar</div>`;
+    eventsHtml += '</div>';
+
+    html += `<div class="${cls}" data-date="${dateStr}" onclick="openGrillaModal('${dateStr}')">
+      ${numHtml}${eventsHtml}
+    </div>`;
+  }
+
+  html += '</div>';
+  grid.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════════════
+function openGrillaModal(dateStr) {
+  grillaEditingDate = dateStr;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const dow = new Date(year, month-1, day).getDay();
+  const dowLabel = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dow];
+  const monthLabel = MONTHS_ES[month-1];
+  const feriadoName = FERIADOS_2026[dateStr];
+
+  document.getElementById('gmTitle').textContent = `${dowLabel} ${day} de ${monthLabel} 2026`;
+  document.getElementById('gmDate').textContent  = feriadoName ? `🇨🇱 Feriado: ${feriadoName}` : '';
+
+  const efDiv = document.getElementById('gmEfemeride');
+  if (feriadoName) {
+    efDiv.style.display = 'block';
+    efDiv.textContent = `Feriado nacional: ${feriadoName}`;
+  } else {
+    efDiv.style.display = 'none';
+  }
+
+  const entry = grillaData[dateStr] || {};
+  document.getElementById('gmEfTxt').value  = entry.ef || '';
+  document.getElementById('gmRed').value    = entry.red || '';
+  document.getElementById('gmPubTxt').value = entry.pub || '';
+
+  document.getElementById('grillaModalOverlay').classList.add('open');
+}
+
+function closeGrillaModal() {
+  document.getElementById('grillaModalOverlay').classList.remove('open');
+  grillaEditingDate = null;
+}
+
+document.getElementById('gmCancelBtn').addEventListener('click', closeGrillaModal);
+document.getElementById('grillaModalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeGrillaModal();
+});
+
+document.getElementById('gmSaveBtn').addEventListener('click', async () => {
+  if (!grillaEditingDate) return;
+  const ef  = document.getElementById('gmEfTxt').value.trim();
+  const red = document.getElementById('gmRed').value;
+  const pub = document.getElementById('gmPubTxt').value.trim();
+
+  if (!ef && !pub) {
+    delete grillaData[grillaEditingDate];
+    // Restore seed efemeride if it exists
+    if (EFEMERIDES_SEED[grillaEditingDate]) {
+      grillaData[grillaEditingDate] = { ef: EFEMERIDES_SEED[grillaEditingDate], red:'', pub:'' };
+    }
+  } else {
+    grillaData[grillaEditingDate] = { ef, red, pub };
+  }
+
+  await grillaSave();
+  closeGrillaModal();
+  renderGrilla();
+  toast('✓ Guardado en grilla', 'ok');
+});
+
+document.getElementById('gmDeleteBtn').addEventListener('click', async () => {
+  if (!grillaEditingDate) return;
+  delete grillaData[grillaEditingDate];
+  // Restore seed efemeride if it exists
+  if (EFEMERIDES_SEED[grillaEditingDate]) {
+    grillaData[grillaEditingDate] = { ef: EFEMERIDES_SEED[grillaEditingDate], red:'', pub:'' };
+  }
+  await grillaSave();
+  closeGrillaModal();
+  renderGrilla();
+  toast('Entradas eliminadas', 'err');
+});
+
+// Navigation
+document.getElementById('grillaMonthPrev').addEventListener('click', () => {
+  if (grillaMonth > 0) { grillaMonth--; renderGrilla(); }
+});
+document.getElementById('grillaMonthNext').addEventListener('click', () => {
+  if (grillaMonth < 11) { grillaMonth++; renderGrilla(); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// ENGAGEMENT RATE HELP PANEL
+// Injected into X tab after tasa_interaccion KPI card
+// ══════════════════════════════════════════════════════════════
+function renderEngagementHelp(containerId, nid) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const cfg = NETS[nid];
+  const netColor = { instagram:'#e1306c', facebook:'#1877f2', tiktok:'#00b2a9', x:'#374151' }[nid] || '#2563eb';
+
+  // Compute ER for this network using its native metrics
+  // ER = interacciones / (alcance or impresiones or visualizaciones) * 100
+  function getNetworkER(monthIdx) {
+    const inter = {
+      instagram: (D.instagram.interacciones||[])[monthIdx] ?? null,
+      facebook:  (D.facebook.interacciones||[])[monthIdx]  ?? null,
+      tiktok:    ((D.tiktok.megusta||[])[monthIdx] ?? null) !== null
+                   ? ((D.tiktok.megusta||[])[monthIdx]||0) + ((D.tiktok.comentarios||[])[monthIdx]||0)
+                   : null,
+      x:         (D.x.interacciones||[])[monthIdx] ?? null,
+    }[nid];
+    const reach = {
+      instagram: (D.instagram.alcance||[])[monthIdx] ?? null,
+      facebook:  (D.facebook.espectadores||[])[monthIdx] ?? null,
+      tiktok:    (D.tiktok.visualizaciones||[])[monthIdx] ?? null,
+      x:         (D.x.impresiones||[])[monthIdx] ?? null,
+    }[nid];
+    return (inter != null && reach != null && reach > 0) ? (inter / reach * 100) : null;
+  }
+
+  // Latest non-null month
+  const li = (() => { for(let i=11;i>=0;i--) { if(getNetworkER(i)!==null) return i; } return -1; })();
+  const currentER = li >= 0 ? getNetworkER(li) : null;
+  const prevER    = li > 0  ? getNetworkER(li-1) : null;
+
+  function erLevel(pct) {
+    if (pct === null) return null;
+    if (pct >= 6)   return { cls:'excelente', label:'Excelente',  color:'#16a34a', dot:'#22c55e' };
+    if (pct >= 3)   return { cls:'bueno',     label:'Bueno',      color:'#065f46', dot:'#10b981' };
+    if (pct >= 1)   return { cls:'optimo',    label:'Óptimo',     color:'#1e3a8a', dot:'#3b82f6' };
+    if (pct >= 0.5) return { cls:'regular',   label:'Regular',    color:'#78350f', dot:'#f59e0b' };
+    return               { cls:'bajo',     label:'Bajo',       color:'#7f1d1d', dot:'#ef4444' };
+  }
+  const lvl = erLevel(currentER);
+  const vDiff = (currentER !== null && prevER !== null) ? ((currentER - prevER) / Math.abs(prevER) * 100) : null;
+
+  // Network-specific ER formula label
+  const erFormula = {
+    instagram: 'Interacciones ÷ Alcance × 100',
+    facebook:  'Interacciones ÷ Espectadores × 100',
+    tiktok:    '(Me Gusta + Comentarios) ÷ Visualizaciones × 100',
+    x:         'Interacciones ÷ Impresiones × 100',
+  }[nid];
+
+  // Network-specific tips
+  const netTips = {
+    instagram: [
+      ['🎥','<strong>Reels</strong> generan 3× más engagement que imágenes estáticas (Meta Business 2024).'],
+      ['❓','<strong>Preguntas en el caption</strong> — "¿Conoces tu subsidio?" activan comentarios inmediatos.'],
+      ['👨‍👩‍👧','<strong>Testimonios reales</strong> con nombre y rostro: el mayor ER en cuentas de vivienda.'],
+      ['🕐','<strong>Horario</strong>: mar–jue 12–14 h y 19–21 h (Chile). Consistencia ≥ 4 posts/semana.'],
+      ['📌','<strong>Stories interactivas</strong>: encuestas y sliders aumentan ER sin afectar el feed.'],
+    ],
+    facebook: [
+      ['📹','<strong>Videos nativos</strong> tienen 5× más alcance que links externos en Facebook (Sprout 2024).'],
+      ['💬','<strong>Responde todos los comentarios</strong> — el algoritmo prioriza publicaciones con diálogo.'],
+      ['📅','<strong>Contenido informativo</strong> sobre subsidios y programas genera más guardados y compartidos.'],
+      ['🎯','<strong>Pauta segmentada</strong> para mayores de 35 años — el grueso de la audiencia de gobierno en FB.'],
+      ['⏰','<strong>Horario</strong>: miércoles y viernes 13–15 h y 20–22 h (hora Chile).'],
+    ],
+    tiktok: [
+      ['🎬','<strong>Videos de 15–30 seg</strong> con gancho en los primeros 2 seg: máxima retención y ER.'],
+      ['🎵','<strong>Trends y audio viral</strong>: usar audios populares aumenta exposición orgánica x3.'],
+      ['🏠','<strong>Detrás de cámaras</strong> — obras en construcción, entregas de llaves: alto engagement emocional.'],
+      ['#️⃣','<strong>Hashtags nicho</strong>: #Vivienda #Chile #Subsidio + 2 trending generales por post.'],
+      ['🔄','<strong>Responde con videos</strong> a comentarios destacados: genera conversación y nuevos seguidores.'],
+    ],
+    x: [
+      ['🧵','<strong>Hilos (threads)</strong> sobre datos y logros de gestión: mayor tiempo de lectura = más RT.'],
+      ['📊','<strong>Infografías y datos duros</strong> funcionan mejor que texto plano en X para gobierno.'],
+      ['🔔','<strong>Publica en eventos coyunturales</strong>: terremotos, lanzamientos, noticias de vivienda = pico de impresiones.'],
+      ['💬','<strong>Menciona a medios y periodistas</strong> relevantes para amplificar alcance orgánico.'],
+      ['⚡','<strong>Horario</strong>: lunes y jueves 8–10 h y 18–20 h — cuando la clase política y prensa está activa.'],
+    ],
+  }[nid] || [];
+
+  // Benchmarks differ by network
+  const benchmarks = {
+    instagram: [
+      { label:'Excelente', range:'≥ 6%',       color:'#22c55e', desc:'Top 5% cuentas institucionales (Sprout Social 2024)' },
+      { label:'Bueno',     range:'3% – 5.9%',   color:'#10b981', desc:'Sobre promedio — recomendado gobierno (Hootsuite 2024)' },
+      { label:'Óptimo',    range:'1% – 2.9%',   color:'#3b82f6', desc:'Promedio sector público LatAm (Metricool 2024)' },
+      { label:'Regular',   range:'0.5% – 0.99%',color:'#f59e0b', desc:'Bajo promedio — ajustar estrategia de contenido' },
+      { label:'Bajo',      range:'< 0.5%',       color:'#ef4444', desc:'Peligro — audiencia sin conexión con el contenido' },
+    ],
+    facebook: [
+      { label:'Excelente', range:'≥ 1%',        color:'#22c55e', desc:'El alcance orgánico FB es menor — 1% ya es destacado (Rival IQ 2024)' },
+      { label:'Bueno',     range:'0.5% – 0.99%',color:'#10b981', desc:'Buen rendimiento para cuentas de gobierno en Facebook' },
+      { label:'Óptimo',    range:'0.2% – 0.49%',color:'#3b82f6', desc:'Promedio sector público Facebook LatAm' },
+      { label:'Regular',   range:'0.1% – 0.19%',color:'#f59e0b', desc:'Bajo promedio — considerar pauta o cambio de formato' },
+      { label:'Bajo',      range:'< 0.1%',       color:'#ef4444', desc:'Alcance orgánico crítico — revisar estrategia completa' },
+    ],
+    tiktok: [
+      { label:'Excelente', range:'≥ 8%',        color:'#22c55e', desc:'TikTok tiene ER nativo más alto — 8%+ es excepcional' },
+      { label:'Bueno',     range:'4% – 7.9%',   color:'#10b981', desc:'Sobre promedio para cuentas institucionales en TikTok' },
+      { label:'Óptimo',    range:'2% – 3.9%',   color:'#3b82f6', desc:'Promedio sector público en TikTok (Metricool LatAm 2024)' },
+      { label:'Regular',   range:'1% – 1.9%',   color:'#f59e0b', desc:'Bajo el potencial de la plataforma — mejorar formatos' },
+      { label:'Bajo',      range:'< 1%',         color:'#ef4444', desc:'Contenido sin resonancia — revisar tendencias y audio' },
+    ],
+    x: [
+      { label:'Excelente', range:'≥ 2%',        color:'#22c55e', desc:'X tiene ER menor por naturaleza — 2%+ es destacado (Twitter Benchmark 2024)' },
+      { label:'Bueno',     range:'1% – 1.9%',   color:'#10b981', desc:'Buen rendimiento para cuentas de gobierno en X' },
+      { label:'Óptimo',    range:'0.5% – 0.99%',color:'#3b82f6', desc:'Promedio sector público en X LatAm' },
+      { label:'Regular',   range:'0.2% – 0.49%',color:'#f59e0b', desc:'Baja interacción — revisar contenido y horarios' },
+      { label:'Bajo',      range:'< 0.2%',       color:'#ef4444', desc:'Sin eco en X — publicaciones sin respuesta de la audiencia' },
+    ],
+  }[nid] || [];
+
+  let indicatorHtml = '';
+  if (currentER !== null && lvl) {
+    const vText = vDiff !== null ? ` · ${vDiff > 0 ? '▲' : '▼'} ${Math.abs(vDiff).toFixed(1)}% vs mes anterior` : '';
+    const advice = {
+      excelente:'🏆 Rendimiento destacado. Mantén la frecuencia y tipo de contenido.',
+      bueno:     '✓ Buen rendimiento. Hay margen para crecer con contenido más emocional.',
+      optimo:    '📊 Dentro del promedio del sector. Aumentar interacciones con CTA directos.',
+      regular:   '⚠ Por debajo del promedio. Revisar formatos y horarios de publicación.',
+      bajo:      '🔴 Engagement muy bajo. Priorizar contenido emocional y de alto impacto.',
+    }[lvl.cls] || '';
+    indicatorHtml = `
+      <div class="er-indicator ${lvl.cls}">
+        <div class="er-dot-lg" style="background:${lvl.dot}"></div>
+        <div>
+          <strong>${lvl.label}</strong> — ER actual ${cfg.label}: ${currentER.toFixed(2)}%${vText}
+          <div style="font-size:10.5px;opacity:.8;margin-top:1px">${advice}</div>
+          <div style="font-size:10px;opacity:.6;margin-top:2px">${erFormula}</div>
+        </div>
+      </div>`;
+  }
+
+  const scaleRows = benchmarks.map(b => `
+    <div class="er-scale-row">
+      <div class="er-scale-bar" style="width:${b.label==='Excelente'?60:b.label==='Bueno'?50:b.label==='Óptimo'?40:b.label==='Regular'?30:20}px;background:${b.color}"></div>
+      <div class="er-scale-label" style="color:${b.color}">${b.label}</div>
+      <div class="er-scale-range">${b.range}</div>
+      <div class="er-scale-desc">${b.desc}</div>
+    </div>`).join('');
+
+  const tipsRows = netTips.map(([icon, text]) =>
+    `<div class="er-tip-item"><span class="er-tip-icon">${icon}</span><span>${text}</span></div>`
+  ).join('');
+
+  const resultId = `afResult-${nid}`;
+  const analyzeBtnId = `afAnalyzeBtn-${nid}`;
+
+  el.innerHTML = `
+    <div class="er-help-panel">
+      <div class="er-help-title" style="color:${netColor}">📊 Benchmark de Tasa de Engagement — ${cfg.label}</div>
+      ${indicatorHtml}
+      <div class="er-scale">${scaleRows}</div>
+      <div class="er-tips">
+        <div class="er-tips-title">💡 Cómo aumentar el Engagement Rate en ${cfg.label}</div>
+        ${tipsRows}
+      </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+
+async function analyzePost(nid) {
+  const url    = document.getElementById(`afUrl-${nid}`)?.value?.trim() || '';
+  const red    = NETS[nid]?.label || nid;
+  const tipo   = document.getElementById(`afTipo-${nid}`)?.value || 'Post';
+  const viz    = parseInt(document.getElementById(`afViz-${nid}`)?.value) || 0;
+  const alc    = parseInt(document.getElementById(`afAlc-${nid}`)?.value) || 0;
+  const likes  = parseInt(document.getElementById(`afLikes-${nid}`)?.value) || 0;
+  const com    = parseInt(document.getElementById(`afCom-${nid}`)?.value) || 0;
+  const shares = parseInt(document.getElementById(`afShares-${nid}`)?.value) || 0;
+  const saved  = parseInt(document.getElementById(`afSaved-${nid}`)?.value) || 0;
+  const inter  = likes + com + shares + saved;
+  const er     = alc > 0 ? (inter / alc * 100).toFixed(2) : '—';
+
+  const afBtnEl = document.getElementById(`afAnalyzeBtn-${nid}`);
+  const resultEl = document.getElementById(`afResult-${nid}`);
+  if (!resultEl) return;
+
+  if (afBtnEl) { afBtnEl.classList.add('loading'); afBtnEl.disabled = true; }
+  resultEl.className = 'af-result vis';
+  resultEl.textContent = 'Analizando publicación...';
+
+  const prompt = `Analiza esta publicación del MINVU en ${red}:
+Tipo: ${tipo}${url ? ` | URL: ${url}` : ''}
+Métricas: Visualizaciones/Impresiones ${viz.toLocaleString()}, Alcance ${alc.toLocaleString()}, Likes ${likes.toLocaleString()}, Comentarios ${com.toLocaleString()}, Compartidos ${shares.toLocaleString()}, Guardados ${saved.toLocaleString()}
+Total interacciones: ${inter.toLocaleString()} | Engagement Rate: ${er}%
+
+Entrega: 1) Diagnóstico del rendimiento (bueno/regular/bajo con justificación), 2) Comparación con benchmark sector público para ${red}, 3) 3 recomendaciones concretas para mejorar. Máximo 200 palabras. En español.`;
+
+  try {
+    const res = await fetch('/.netlify/functions/ai-proxy', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:600,
+        system:`Eres experto en análisis de redes sociales institucionales para el MINVU Chile. Responde en español, de forma concisa y práctica.`,
+        messages:[{ role:'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    resultEl.textContent = data.content?.[0]?.text || 'Sin respuesta del servidor.';
+  } catch(err) {
+    resultEl.textContent = `⚠ Error: ${err.message}`;
+  } finally {
+    if (afBtnEl) { afBtnEl.classList.remove('loading'); afBtnEl.disabled = false; }
+  }
+}
+
+
 function buildSummary(mi, pi) {
   return Object.entries(NETS).map(([nid, cfg]) => {
     const lines = cfg.kpis.map(kpi => {
@@ -1676,6 +2401,8 @@ function buildSummary(mi, pi) {
 
 // ─── INIT ─────────────────────────────────────────────────────
 (async function init() {
+  // Sync grilla from localStorage immediately so efemérides show without delay
+  grillaLoadFromStorage();
   // Show a subtle loading state while fetching from Supabase
   const content = document.querySelector('.content');
   if (content) content.style.opacity = '0.5';
@@ -1686,11 +2413,575 @@ function buildSummary(mi, pi) {
     D = JSON.parse(JSON.stringify(SEED));
   }
   if (content) content.style.opacity = '1';
+  // Load grilla from cloud (merges with seed efemérides)
+  await grillaLoadFromCloud();
   buildSidebarSubs();
   bindAllNav();
   renderDash();
 })();
+
+
+// ══════════════════════════════════════════════════════════════
+// PDF + PPTX EXPORT
+// ══════════════════════════════════════════════════════════════
+
+const NET_COLORS = {
+  instagram: '#e1306c',
+  facebook:  '#1877f2',
+  tiktok:    '#00b2a9',
+  x:         '#374151',
+};
+
+const NET_LABELS = {
+  instagram: 'Instagram',
+  facebook:  'Facebook',
+  tiktok:    'TikTok',
+  x:         'X (Twitter)',
+};
+
+// ── AI summary for a network's month ────────────────────────
+async function getAISummary(nid, mi, pi) {
+  const cfg = NETS[nid];
+  const summary = Object.entries(NETS).filter(([k]) => k === nid).map(([netId, cfg]) => {
+    const lines = cfg.kpis.map(kpi => {
+      const arr = (D[netId] && D[netId][kpi.id]) ? D[netId][kpi.id] : [];
+      const c = arr[mi] ?? null, p = pi !== null ? (arr[pi] ?? null) : null;
+      const v = vari(c, p);
+      const vt = v !== null ? ` (${v > 0 ? '+' : ''}${v.toFixed(1)}% vs ${MONTHS[pi]})` : '';
+      return `  ${kpi.label}: ${c !== null ? (kpi.fmt === 'pct' ? (c*100).toFixed(2)+'%' : c.toLocaleString()) : 'Sin dato'}${c !== null ? vt : ''}`;
+    });
+    return lines.join('\n');
+  }).join('');
+
+  try {
+    const res = await fetch('/.netlify/functions/ai-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: 'Eres el Community Manager del MINVU. Responde SIEMPRE en español. Sé conciso y profesional. Sin bullets, solo párrafos fluidos.',
+        messages: [{
+          role: 'user',
+          content: `Datos ${NET_LABELS[nid]} — ${MONTHS[mi]} 2026${pi !== null ? ` vs ${MONTHS[pi]}` : ''}:\n${summary}\n\nEscribe UN párrafo de máximo 4 líneas resumiendo el rendimiento general del mes y comparando con el mes anterior. Luego UN párrafo final de balance general con conclusión clara. Total máximo 120 palabras.`
+        }]
+      })
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ── KPI chart summaries (without AI) ─────────────────────────
+function getKpiSummary(nid, kpi, mi, pi) {
+  const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+  const c = arr[mi] ?? null;
+  const p = pi !== null ? (arr[pi] ?? null) : null;
+  const v = vari(c, p);
+  const valStr = c !== null ? (kpi.fmt === 'pct' ? (c*100).toFixed(2)+'%' : c.toLocaleString('es-CL')) : 'Sin datos';
+  const varStr = v !== null ? `${v > 0 ? '+' : ''}${v.toFixed(1)}% vs ${pi !== null ? MONTHS[pi] : 'mes anterior'}` : '';
+
+  if (c === null) return `${kpi.label}: Sin datos registrados para ${MONTHS[mi]}.`;
+
+  let trend = '';
+  if (v === null) trend = `Primer mes con registro en este KPI.`;
+  else if (v >= 50) trend = `Crecimiento excepcional de ${v.toFixed(0)}% — contenido de alto impacto.`;
+  else if (v >= 20) trend = `Tendencia positiva significativa, ${varStr}.`;
+  else if (v >= 0)  trend = `Leve crecimiento respecto al mes anterior, ${varStr}.`;
+  else if (v >= -20) trend = `Caída moderada de ${Math.abs(v).toFixed(0)}% — revisar estrategia de contenido.`;
+  else trend = `Caída importante de ${Math.abs(v).toFixed(0)}% — requiere acción inmediata.`;
+
+  return `${kpi.label}: ${valStr}. ${trend}`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PDF EXPORT
+// ══════════════════════════════════════════════════════════════
+async function exportPDF(nid) {
+  const mi = parseInt(document.getElementById(`pdfMonth-${nid}`)?.value ?? 2);
+  const pi = mi > 0 ? mi - 1 : null;
+  const cfg = NETS[nid];
+  const color = NET_COLORS[nid];
+  const label = NET_LABELS[nid];
+  const monthLabel = MONTHS[mi];
+
+  toast(`⏳ Generando PDF ${label} ${monthLabel}...`, 'ok');
+
+  // Get AI summary (optional, graceful fallback)
+  const aiText = await getAISummary(nid, mi, pi);
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pw = 210, ph = 297, margin = 14;
+  const cw = pw - margin * 2;
+  let y = margin;
+
+  // ── Color helper ─────────────────────────────────────────
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return [r, g, b];
+  }
+  const [cr, cg, cb] = hexToRgb(color === '#374151' ? '#6b7280' : color);
+
+  // ── Header bar ───────────────────────────────────────────
+  doc.setFillColor(cr, cg, cb);
+  doc.rect(0, 0, pw, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(15); doc.setFont('helvetica','bold');
+  doc.text('MINISTERIO DE VIVIENDA Y URBANISMO', margin, 9);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text(`${label.toUpperCase()} — Rendimiento ${monthLabel} 2026`, margin, 16);
+  doc.text(`Generado: ${new Date().toLocaleDateString('es-CL')}`, pw - margin, 16, { align: 'right' });
+
+  y = 30;
+
+  // ── KPI Summary cards ────────────────────────────────────
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('Resumen de KPIs', margin, y); y += 6;
+
+  const kpiBoxW = (cw - 6) / 4;
+  cfg.kpis.forEach((kpi, i) => {
+    const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+    const c = arr[mi] ?? null;
+    const p = pi !== null ? (arr[pi] ?? null) : null;
+    const v = vari(c, p);
+    const bx = margin + i * (kpiBoxW + 2);
+
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(bx, y, kpiBoxW, 22, 2, 2, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(bx, y, kpiBoxW, 22, 2, 2, 'S');
+
+    // Accent line
+    doc.setFillColor(cr, cg, cb);
+    doc.rect(bx, y, kpiBoxW, 1.5, 'F');
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(6); doc.setFont('helvetica','normal');
+    doc.text(kpi.label.toUpperCase(), bx + 2, y + 6);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(11); doc.setFont('helvetica','bold');
+    const valStr = c !== null ? (kpi.fmt === 'pct' ? (c*100).toFixed(2)+'%' : fmt(c)) : '—';
+    doc.text(valStr, bx + 2, y + 14);
+
+    if (v !== null) {
+      const [vr, vg, vb] = v >= 0 ? [5, 150, 105] : [220, 38, 38];
+      doc.setTextColor(vr, vg, vb);
+      doc.setFontSize(7);
+      doc.text(`${v >= 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%`, bx + 2, y + 19);
+    }
+  });
+  y += 28;
+
+  // ── Chart images (capture from DOM) ─────────────────────
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('Evolución mensual por KPI', margin, y); y += 5;
+
+  const chartsEl = document.getElementById(`${nid}-charts`);
+  if (chartsEl) {
+    try {
+      const canvas = await html2canvas(chartsEl, {
+        scale: 1.5, backgroundColor: '#ffffff', useCORS: true, logging: false
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const imgH = (canvas.height / canvas.width) * cw;
+      const maxH = 70;
+      const finalH = Math.min(imgH, maxH);
+      const finalW = (canvas.width / canvas.height) * finalH;
+      doc.addImage(imgData, 'JPEG', margin, y, Math.min(cw, finalW), finalH);
+      y += finalH + 6;
+    } catch(e) {
+      doc.setFontSize(8); doc.setTextColor(150,150,150);
+      doc.text('(Gráficos no disponibles — abrir en navegador para exportar)', margin, y);
+      y += 6;
+    }
+  }
+
+  // ── KPI analysis paragraphs ───────────────────────────────
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('Análisis por indicador', margin, y); y += 5;
+
+  cfg.kpis.forEach(kpi => {
+    const text = getKpiSummary(nid, kpi, mi, pi);
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+
+    // Accent dot
+    doc.setFillColor(cr, cg, cb);
+    doc.circle(margin + 1.5, y + 1.5, 1.5, 'F');
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(text, cw - 6);
+    const boxH = lines.length * 4 + 5;
+
+    if (y + boxH > ph - 30) { doc.addPage(); y = margin; }
+
+    doc.text(lines, margin + 5, y + 4);
+    y += boxH;
+  });
+
+  y += 4;
+
+  // ── AI Analysis paragraph ─────────────────────────────────
+  if (aiText) {
+    if (y + 40 > ph - 20) { doc.addPage(); y = margin; }
+    doc.setFillColor(245, 243, 255);
+    doc.setDrawColor(cr, cg, cb);
+    doc.roundedRect(margin, y, cw, 2, 1, 1, 'F');
+    y += 5;
+
+    doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.setTextColor(cr, cg, cb);
+    doc.text('✦ Análisis y balance general del mes', margin, y); y += 6;
+
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+    doc.setTextColor(51, 65, 85);
+    const aiLines = doc.splitTextToSize(aiText, cw);
+    const aiBoxH = aiLines.length * 4.2;
+    if (y + aiBoxH > ph - 20) { doc.addPage(); y = margin; }
+
+    doc.setFillColor(249, 247, 255);
+    doc.setDrawColor(221, 214, 254);
+    doc.roundedRect(margin, y - 3, cw, aiBoxH + 6, 2, 2, 'FD');
+    doc.text(aiLines, margin + 3, y + 3);
+    y += aiBoxH + 10;
+  }
+
+  // ── Footer ────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, ph - 10, pw, 10, 'F');
+    doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text('MINVU · Dashboard de Redes Sociales 2026 · Uso interno', margin, ph - 4);
+    doc.text(`Página ${i} / ${totalPages}`, pw - margin, ph - 4, { align: 'right' });
+  }
+
+  doc.save(`MINVU_${label}_${monthLabel}_2026.pdf`);
+  toast(`✓ PDF ${label} ${monthLabel} descargado`, 'ok');
+}
+
+async function exportPPTX(nid) {
+  // Verify PptxGenJS is loaded
+  if (typeof PptxGenJS === 'undefined') {
+    toast('⚠ Librería PPTX no cargada. Recarga la página.', 'err');
+    return;
+  }
+
+  const mi = parseInt(document.getElementById(`pdfMonth-${nid}`)?.value ?? 2);
+  const pi = mi > 0 ? mi - 1 : null;
+  const cfg = NETS[nid];
+  const color = NET_COLORS[nid];
+  const label = NET_LABELS[nid];
+  const monthLabel = MONTHS[mi];
+  const hexColor = color.replace('#','');
+  const darkHex = '0a0f1e';
+  const darkAlt = '111827';
+  const lightHex = 'f8fafc';
+  const mutedHex = '64748b';
+  const whiteHex = 'FFFFFF';
+
+  // Accent color per network (must be 6-char hex, no #)
+  const accentHex = {
+    instagram: 'e1306c', facebook: '1877f2', tiktok: '00b2a9', x: '6b7280'
+  }[nid] || '2563eb';
+
+  toast(`⏳ Generando PPTX ${label} ${monthLabel}...`, 'ok');
+
+  try {
+    const aiText = await getAISummary(nid, mi, pi);
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_16x9';
+    pptx.title = `MINVU · ${label} · ${monthLabel} 2026`;
+    pptx.author = 'MINVU · Redes Sociales 2026';
+    pptx.subject = `Rendimiento ${label} ${monthLabel} 2026`;
+
+    const W = 10, H = 5.625; // inches 16:9
+
+    // ── Helper: heading slide template ─────────────────────
+    function addSlideBase(dark = true) {
+      const slide = pptx.addSlide();
+      // Background
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:0, w:W, h:H,
+        fill:{ color: dark ? darkHex : lightHex }
+      });
+      // Top accent line
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:0, w:W, h:0.05,
+        fill:{ color: accentHex }
+      });
+      // Bottom accent line
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:H-0.05, w:W, h:0.05,
+        fill:{ color: accentHex }
+      });
+      return slide;
+    }
+
+    // ── SLIDE 1: Cover ─────────────────────────────────────
+    {
+      const slide = addSlideBase(true);
+      // Bold geometric accent
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:0, w:0.12, h:H,
+        fill:{ color: accentHex }
+      });
+      // Right panel decoration
+      slide.addShape(pptx.ShapeType.rect, {
+        x:6.8, y:0, w:3.2, h:H,
+        fill:{ color: accentHex, transparency:90 }
+      });
+      // Diagonal stripe
+      slide.addShape(pptx.ShapeType.rect, {
+        x:6.6, y:0, w:0.08, h:H,
+        fill:{ color: accentHex, transparency:50 }
+      });
+
+      slide.addText('MINISTERIO DE VIVIENDA Y URBANISMO', {
+        x:0.35, y:0.8, w:6.2, h:0.55,
+        fontSize:13, bold:true, color:whiteHex,
+        fontFace:'Calibri', charSpacing:3, valign:'middle',
+      });
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0.35, y:1.45, w:1.5, h:0.055,
+        fill:{ color: accentHex }
+      });
+      slide.addText(`KPIs Y CONCLUSIONES DE ${monthLabel.toUpperCase()} 2026`, {
+        x:0.35, y:1.6, w:6.2, h:0.9,
+        fontSize:30, bold:true, color:whiteHex,
+        fontFace:'Calibri', charSpacing:-0.5,
+      });
+      slide.addText(label.toUpperCase(), {
+        x:0.35, y:2.6, w:5, h:0.5,
+        fontSize:18, bold:true, color:accentHex,
+        fontFace:'Calibri', charSpacing:5,
+      });
+      slide.addText(
+        `Período: ${monthLabel} 2026${pi !== null ? ` · Comparado con ${MONTHS[pi]} 2026` : ''}`,
+        { x:0.35, y:3.2, w:6.2, h:0.32, fontSize:11, color:mutedHex, fontFace:'Calibri' }
+      );
+      slide.addText(`Generado el ${new Date().toLocaleDateString('es-CL')}`, {
+        x:0.35, y:4.9, w:5, h:0.3, fontSize:8.5, color:mutedHex, fontFace:'Calibri'
+      });
+      // Network icon text in right panel
+      slide.addText({ instagram:'📸', facebook:'👥', tiktok:'🎵', x:'𝕏' }[nid] || '📊', {
+        x:7.2, y:1.5, w:2.4, h:2.4,
+        fontSize:80, align:'center', valign:'middle',
+      });
+    }
+
+    // ── SLIDE 2: KPI Summary ───────────────────────────────
+    {
+      const slide = addSlideBase(true);
+      slide.addText('RESUMEN DE KPIs', {
+        x:0.4, y:0.2, w:9.2, h:0.4,
+        fontSize:10, bold:true, color:accentHex,
+        fontFace:'Calibri', charSpacing:4,
+      });
+      slide.addText(`${label} · ${monthLabel} 2026`, {
+        x:0.4, y:0.6, w:9.2, h:0.55,
+        fontSize:22, bold:true, color:whiteHex, fontFace:'Calibri',
+      });
+
+      const boxW = 2.15, boxH = 2.6, gap = 0.17;
+      cfg.kpis.forEach((kpi, i) => {
+        const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+        const c = arr[mi] ?? null, p = pi !== null ? (arr[pi] ?? null) : null;
+        const v = vari(c, p);
+        const bx = 0.3 + i * (boxW + gap);
+        const by = 1.4;
+        const valStr = c !== null ? (kpi.fmt === 'pct' ? (c*100).toFixed(2)+'%' : fmt(c)) : '—';
+
+        // Card bg
+        slide.addShape(pptx.ShapeType.rect, {
+          x:bx, y:by, w:boxW, h:boxH,
+          fill:{ color:'111827' }, line:{ color:'1f2937', pt:0.5 }
+        });
+        // Accent top bar
+        slide.addShape(pptx.ShapeType.rect, {
+          x:bx, y:by, w:boxW, h:0.06,
+          fill:{ color: accentHex }
+        });
+        // KPI label
+        slide.addText(kpi.label.toUpperCase(), {
+          x:bx+0.1, y:by+0.15, w:boxW-0.2, h:0.25,
+          fontSize:6.5, color:mutedHex, fontFace:'Calibri', charSpacing:1,
+        });
+        // Big value
+        slide.addText(valStr, {
+          x:bx+0.1, y:by+0.45, w:boxW-0.2, h:0.8,
+          fontSize:28, bold:true, color:whiteHex, fontFace:'Calibri',
+        });
+        // Variation
+        if (v !== null) {
+          const vColor = v >= 0 ? '22c55e' : 'ef4444';
+          const vArrow = v >= 0 ? '▲' : '▼';
+          slide.addText(`${vArrow} ${Math.abs(v).toFixed(1)}%`, {
+            x:bx+0.1, y:by+1.4, w:boxW-0.2, h:0.35,
+            fontSize:13, bold:true, color:vColor, fontFace:'Calibri',
+          });
+          if (pi !== null) {
+            slide.addText(`vs ${MONTHS[pi]}`, {
+              x:bx+0.1, y:by+1.8, w:boxW-0.2, h:0.25,
+              fontSize:8, color:mutedHex, fontFace:'Calibri',
+            });
+          }
+        } else {
+          slide.addText('Sin dato anterior', {
+            x:bx+0.1, y:by+1.4, w:boxW-0.2, h:0.5,
+            fontSize:8, color:mutedHex, fontFace:'Calibri',
+          });
+        }
+      });
+    }
+
+    // ── SLIDES 3–N: One per KPI with chart + analysis ──────
+    for (let ki = 0; ki < cfg.kpis.length; ki++) {
+      const kpi = cfg.kpis[ki];
+      const arr = (D[nid] && D[nid][kpi.id]) ? D[nid][kpi.id] : [];
+      const summary = getKpiSummary(nid, kpi, mi, pi);
+      const c = arr[mi] ?? null;
+      const valStr = c !== null ? (kpi.fmt === 'pct' ? (c*100).toFixed(2)+'%' : fmt(c)) : '—';
+
+      const slide = addSlideBase(true);
+      // Left label strip
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:0, w:0.08, h:H,
+        fill:{ color: accentHex }
+      });
+      // Slide header
+      slide.addText(kpi.label.toUpperCase(), {
+        x:0.25, y:0.12, w:9.5, h:0.35,
+        fontSize:9, bold:true, color:accentHex, fontFace:'Calibri', charSpacing:3,
+      });
+      slide.addText(`${label} · ${monthLabel} 2026`, {
+        x:0.25, y:0.45, w:9.5, h:0.4,
+        fontSize:18, bold:true, color:whiteHex, fontFace:'Calibri',
+      });
+      // Big value display (left)
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0.25, y:1.05, w:2.6, h:1.6,
+        fill:{ color:'111827' }, line:{ color:'1f2937', pt:0.5 }
+      });
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0.25, y:1.05, w:2.6, h:0.05,
+        fill:{ color: accentHex }
+      });
+      slide.addText('VALOR DEL MES', {
+        x:0.35, y:1.15, w:2.4, h:0.25,
+        fontSize:7, color:mutedHex, fontFace:'Calibri', charSpacing:1,
+      });
+      slide.addText(valStr, {
+        x:0.35, y:1.4, w:2.4, h:0.8,
+        fontSize:32, bold:true, color:whiteHex, fontFace:'Calibri',
+      });
+
+      // Chart image capture
+      const chartCanvas = document.getElementById(`ch-${nid}-${kpi.id}`);
+      if (chartCanvas) {
+        try {
+          const imgData = chartCanvas.toDataURL('image/png');
+          slide.addImage({ data: imgData, x:3.0, y:1.05, w:5.5, h:2.6 });
+        } catch(e) {
+          slide.addText('Gráfico no disponible', {
+            x:3.0, y:2.1, w:5.5, h:0.5,
+            fontSize:9, color:mutedHex, fontFace:'Calibri', align:'center',
+          });
+        }
+      }
+
+      // Analysis text box (bottom)
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0.25, y:3.8, w:9.5, h:1.55,
+        fill:{ color:'0f172a' }, line:{ color: accentHex, pt:0.5 }
+      });
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0.25, y:3.8, w:0.06, h:1.55,
+        fill:{ color: accentHex }
+      });
+      slide.addText('ANÁLISIS', {
+        x:0.4, y:3.88, w:9, h:0.22,
+        fontSize:7, bold:true, color:accentHex, fontFace:'Calibri', charSpacing:3,
+      });
+      slide.addText(summary, {
+        x:0.4, y:4.1, w:9, h:1.1,
+        fontSize:9.5, color:'e2e8f0', fontFace:'Calibri', wrap:true,
+      });
+
+      // Slide number
+      slide.addText(`${ki + 3} / ${cfg.kpis.length + 4}`, {
+        x:9.2, y:5.3, w:0.7, h:0.22,
+        fontSize:7, color:mutedHex, fontFace:'Calibri', align:'right',
+      });
+    }
+
+    // ── SLIDE FINAL: Balance general ───────────────────────
+    {
+      const slide = addSlideBase(true);
+      // Full dark coverage with accent elements
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:0, w:W, h:H,
+        fill:{ color: darkHex }
+      });
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:0, w:0.12, h:H,
+        fill:{ color: accentHex }
+      });
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:H/2, w:W, h:0.04,
+        fill:{ color: accentHex, transparency:75 }
+      });
+
+      slide.addText('✦', {
+        x:0.3, y:0.2, w:0.5, h:0.5,
+        fontSize:20, color:accentHex, fontFace:'Calibri',
+      });
+      slide.addText('BALANCE GENERAL DEL MES', {
+        x:0.9, y:0.22, w:8.8, h:0.45,
+        fontSize:20, bold:true, color:whiteHex,
+        fontFace:'Calibri',
+      });
+      slide.addText(`${label} · ${monthLabel} 2026`, {
+        x:0.9, y:0.7, w:8.8, h:0.3,
+        fontSize:10, color:accentHex, fontFace:'Calibri', charSpacing:2,
+      });
+
+      const finalText = aiText || cfg.kpis.map(kpi => getKpiSummary(nid, kpi, mi, pi)).join('\n\n');
+      slide.addText(finalText, {
+        x:0.3, y:1.15, w:9.4, h:3.7,
+        fontSize:11, color:'e2e8f0', fontFace:'Calibri',
+        wrap:true, lineSpacingMultiple:1.4,
+      });
+
+      slide.addShape(pptx.ShapeType.rect, {
+        x:0, y:H-0.55, w:W, h:0.55,
+        fill:{ color:'0d1117' }
+      });
+      slide.addText('MINISTERIO DE VIVIENDA Y URBANISMO · Dashboard Redes Sociales 2026 · Uso interno', {
+        x:0.3, y:H-0.42, w:9, h:0.28,
+        fontSize:7.5, color:mutedHex, fontFace:'Calibri',
+      });
+    }
+
+    await pptx.writeFile({ fileName: `MINVU_${label}_${monthLabel}_2026.pptx` });
+    toast(`✓ PPTX ${label} ${monthLabel} descargado`, 'ok');
+
+  } catch(err) {
+    console.error('PPTX error:', err);
+    toast(`⚠ Error PPTX: ${err.message}`, 'err');
+  }
+}
+
 </script>
 </body>
 </html>
-<!-- deploy -->
