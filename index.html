@@ -373,6 +373,12 @@ table.dt tbody tr:hover td { background: #fafbfc; }
 .cal-add-btn { margin-top:2px; font-size:9px; color:var(--muted); opacity:0; transition:opacity .15s; cursor:pointer; display:flex; align-items:center; gap:2px; }
 .cal-day:hover .cal-add-btn { opacity:1; }
 /* Modal */
+.gm-pub-row { display:flex; gap:6px; align-items:flex-start; }
+.gm-pub-row select { flex-shrink:0; width:130px; border:1px solid var(--border2); border-radius:6px; padding:6px 8px; font-size:12px; font-family:var(--font); outline:none; background:var(--card); color:var(--text); }
+.gm-pub-row textarea { flex:1; border:1px solid var(--border2); border-radius:6px; padding:6px 8px; font-size:12px; font-family:var(--font); resize:vertical; min-height:52px; outline:none; color:var(--text); background:var(--card); }
+.gm-pub-row textarea:focus,.gm-pub-row select:focus { border-color:var(--accent); }
+.gm-pub-remove { flex-shrink:0; background:none; border:none; color:var(--red); font-size:14px; cursor:pointer; padding:4px; border-radius:4px; line-height:1; margin-top:4px; }
+.gm-pub-remove:hover { background:var(--red-bg); }
 .grilla-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:500; align-items:center; justify-content:center; }
 .grilla-modal-overlay.open { display:flex; }
 .grilla-modal { background:var(--card); border-radius:var(--rl); padding:22px 24px; width:420px; max-width:94vw; box-shadow:0 20px 50px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
@@ -441,10 +447,76 @@ table.dt tbody tr:hover td { background: #fafbfc; }
   .dash-grid { grid-template-columns:1fr 1fr; }
 }
 
+
+/* ─── PASSWORD LOCK ─────────────────────────────────────── */
+#lockOverlay {
+  position:fixed; inset:0; z-index:9999;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font);
+}
+.lock-box {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1);
+  border-radius:16px; padding:40px 36px; width:340px; max-width:92vw;
+  box-shadow:0 24px 60px rgba(0,0,0,.5); text-align:center;
+  backdrop-filter:blur(10px);
+}
+.lock-logo { margin:0 auto 18px; display:block; width:64px; height:64px;
+  border-radius:50%; object-fit:contain; }
+.lock-title { font-size:18px; font-weight:700; color:#f1f5f9;
+  letter-spacing:-.02em; margin-bottom:4px; }
+.lock-sub { font-size:12px; color:#64748b; margin-bottom:28px; }
+.lock-label { font-size:11px; font-weight:600; color:#94a3b8;
+  text-transform:uppercase; letter-spacing:.06em;
+  text-align:left; margin-bottom:6px; display:block; }
+.lock-input {
+  width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+  border-radius:9px; padding:11px 14px; font-size:14px; color:#f1f5f9;
+  font-family:var(--font); outline:none; margin-bottom:14px;
+  transition:border-color .2s, box-shadow .2s; letter-spacing:.08em;
+}
+.lock-input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.25); }
+.lock-btn {
+  width:100%; padding:11px; background:#2563eb; color:#fff;
+  border:none; border-radius:9px; font-size:14px; font-weight:600;
+  font-family:var(--font); cursor:pointer; transition:background .15s;
+}
+.lock-btn:hover { background:#1d4ed8; }
+.lock-error { color:#f87171; font-size:12px; margin-top:10px;
+  min-height:18px; animation: shake .3s ease; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+}
+
+
+/* ─── COUNTER ANIMATION ──────────────────────────────────── */
+.count-anim { display:inline-block; }
+@keyframes countIn {
+  from { opacity:0; transform:translateY(6px) scale(.95); }
+  to   { opacity:1; transform:none; }
+}
+.count-anim { animation: countIn .35s ease both; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- PASSWORD LOCK -->
+<div id="lockOverlay">
+  <div class="lock-box">
+    <img class="lock-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAAAZvklEQVR42tWbeZRdVZ3vP3vvM9z53qpKpYZUpkoCBBJC5oQgQzMJCwdaBAdsBQcUW3l0iyPPuZ36+bRfi2i3PmcRtG1tG1REmQwkgSiQkBASEkgllaTmqjufc/be749zU0llYgro22vdteqcOvfcvb/7N3737yestZaXY1h74HOsIcSBz8swnJdlwVI+/0VZC8a85ICI4y4BxsSTV2rCbT06RrR3H3rfPszgMKZYhHoQ/9NzEdksqqUJ2daG296GKuQnvlcbEMRg/lVKwP7dakxQVyrUH9tI8NCfCDduQu/cjR0dwdbqYDQcCXalEL6HzBeQU6fgnjIXf+kivAXzUZn0RMk6TkC8eAk4ZEL1xzdTueNOgtUPonf1QhgiXBc8FxwHKxX2KOIsrEUYA1EIQYgNQ3Ac5JRO/NOXk7z4AhKnzjuuQLw4ALQeF/XKuvVUfnQr4dqHsbUqMpHE+j5GSoQ1OFrj2QjXaOT49k8EwiAIpSQQikg6WCmRxiCCOrZaA9/HWbqIzJsuJ3n68gOqoeTLDMD+rwhBsONpxm7+NsHd9yKMQaTTGKXAGBI6JGkiIiSDbpLdXp4eL8c+N8uwSlCTLgC+iSjoKu1hia5glKnBGM1RBdcaatKhKl1QEqk1tlzGCoH3ilVkr30H/pzZDXWyL8hQPn8AjAEZ7+HY92+h8q3vQbGIyGXRIp5kVtexQrDVb+H+7HQeyE7n8WQrfW6WsnSJhDhs9wUWZS0pEzA5LDO32s/ppZ28ovg0J9YGkNZSVB5GOShrsMUipFKkrnoL2avfghRifG4vHQANkQ8HBhn59BcI77kfmctiHRdjNHldpy4Ud+e6ubX5VB7ITmPASaKw+Ebj2lj8xVF+0goRq4FQ1KVCI2mOKqws9XD54EbOG3uKhAkZUz5CKYSOMKNjuKtWUPjER3Db2yao5fEFoPHi2uYnGfnQ/8T29CALeSJtSZgQ32p+l5vNTW3LWZOZihaSjA5wrAYERoDluYmowCIbYh0JRVm5CAtLy7u5dt8aLhrdSigkVeniKIkZHUW0t1P4wqdiI/k8QHhuADReWH3oT4zc8DFEpQLpNJE2NEU1dnp5/mnK2fyiaS4AGRMgrMUIyfEIMlRjiiXlYRBcMrKFG3ffQ3d9kBGVQDkKKlWM65D/4qdJr1r5nEF4dgD2L/7hPzFy3YcQRmN9H6sNTbrKfxdO4iNTz6fHy9MU1UDE1vylGLIhQ8MqQXtQ4rO77uJ1w48zovw4hggCjLEUvvw5UqtWPCcQjg1Aw6jUntjK8DXvj92R74PWZHXAv7Sfzuc7z8S1hqQJiYTk5RhOwzvUhMMH9qzmhr33URYuVjmIMMBKSdPNXyExf96zGsajA9C4HQ4NM3jVe2DvPmwqCVqT0SEf7zqXm9qW06SrCF66XT+WNAAMOine0fcwX+i5k6p0sEohqjVobqLlO9/AbZ8MxoIUR3nPMXy9BUY/80VsTw+kU1htyOmAj3edy9faVtASVWID9wIX/2JyHIPAImgNy3xr8hI+PPVC0iaMxT6VxO7bx8gnP4fROo4RjrLP8liiP3bLzwh+fy+yUIgNnq7x1fbTualtOZOiMvpFGDkhQGtLpO0LBsECkZAxCK2L+VLHK8jrOlobRD5PuHoNxe/+OFaBowBwuAo0kpqgZzeDV74dYQxaOhSiKncUTuCq7r8lbYKGs3rhI9SWtpyHFLBnNMBVL1yFRCOPGFMJvrnjl7xueCPDTjIOmLSh+fv/hj+7+4j2QB4tICne9G9QLGIdl4QJ6PHyfHTqBbhWI+AFL94CCVdRrAa8YWUXb33FNMYqAUlXvah3IiBhQ26cei7bEi0kTYhRDtRqFP/1m0d9tzyi1f/zowR/uAeRy2GMxjeaf+o8m51enqSJXpTOa21pTjv8/LoVXHfhbN597ix+9Y8rac25L0odDIKEiehzM3ym8xwca0BrRDZDcP9qamvWxbuvzbElwALl798C2mCEJKfr3JWfxX82z6VJV1+Uq7MWfFfy5N4y//e+Z2hKJ8infH6weicbd5VIuJIXk5xHQlKIqtxeOIHbCyeS0zW0kAghKH/vFiyHewPn0N0PtmwjXPMQIpMGrQmE4mttK8bRERKkEBhrwYKUjb+J72szcQVSiDg4aty3jU9z2uXLd2wm1JZCyjs8+pMCY+wx1ULJw3/PCoHC8vXJyzlv9CmUjiCTJlj/J+qPPR6HygfZAudQv1+5/dfYSgXb3ESuXuG3+TmsyUwlowOsFASRoRoYUp5CShgtRyQ9hbGWWqhpSnlYa0GAQFCqRRhrySVdLBZrLbmEw31bBrlt7W4s0FlIkE06GBOrgLUwUAzIJR2chnE8WDL2PzNcDskkFEoeeMYgyOg66zOd3JmfzWuHNzHipBFBSOVXvzlAqExQgQaHp2s1gvsfRCYTYAwWuLVlPhqJFBBElhmT0ly6pIOOgk8u4fC3SzqY1pJkfleWq8+cTqkeERlLEBlK9Yjz50/m0iWdlOoRtcAQRJZqqOkbq5PyHdK+Q+9IHSUE2lpqQWxhrn/lLCZlPephDLhoGAchINJgrOXNp3eRS7rUQxN/b9yACISFn7TMJxIKoQ0ylSR4cA26VJrgFuXB8AYbHkf37ML6Pgkdsi3RwgPZaaRNgJCSYjXkVQvbueW9K3jd0k7OPWUyP37vCq5cNY2OgsdJHWmSrqQ97zOnPUMYGeZ3pZnWkiAMDQtn5CmkHD5w8Wy+dMUp1ENDNukwf2qWSj0il3CY0pxgZmuKRTOyWAtJTzF/apZ6GMV63pCSZTML/J+3LCDjKzK+w9wpWapB/IwWgrQJWJfuYnOilaQOsJ6H6d1L/c+PHVD5cRVoAFBftx7CECMVybDKH7PT6XdSNEdVLAohwHUkpVrA3Ck5JudqVIIAzxGcceIkWtI+H7h4NufNa6Ml6/PPt2/htBnNbN1b4mtXncqymc189uebuWxZvHNrnxriqrNm0J5P8M0/7GDB9DyLpue5be0uTu5qYvqkJB999YlMyvjcvbmPj9y2mUxC8f1rFtGU9hgqh0xtSfH1q+bQmvX50eoevnj7VprTHmjNkJPivtxMFlT3UBFJpNbU160n9YrTD1GBhkGINm5CuA7CGiIkq7PTGzH3AR3LJx3W7xhmXleO2W0ZNvSMkk24PL6rSEfBpy2f5N4nBviv9b0snF5g8+4S3a0Z1m0dwgB7R2qs2z7C9+57muFKyIJpeVZv6WN6a5Lpk1L8YHUP//Lb7aRch0sXd5BJuLzz2+t55znduApOaM+wpLuFN930EP3FOuee0sqctiyrn+hnVlsKJRoBmhA41rA6M41AODHZ6rmEj2+K91uq/TlFzKWZUgm9cxd4Ho7WDDlJNiVb8Y3GNFTLWOgoJNiwa5SulhTphMOO/jLthQS+I5FS4CqBqySOkgjAU4KEK+kbrtKRT3DBwnY27Rrl6rNn0t2aZrAU0JROcO/mfrwGuekqSS7l8KenR8gkFF98w3z++OQAgbbsHqoxWKrzv940n85Cgoe2D8fGN+1z3xMDSBHrv0Hg24gtyUn0OylcE4HnYXb1ooeH4z21FmG1tkhJsPUpBt96DdZRpEzIpsRkXnvCmydY3iAyzOvKUayGdBSSDJUDQm3Jpxz2DtdoyXqU6hHGCJJeDEBkLI4S+K6kqynJXRv7cZXkvHmtPLxjhKQnWTqzidVbh2hKuwyXA7b3VThr7iQe3j7C7LYU87py/PqxPkr1CK0tJ7SnOaUrx97ROut3jNA9OcXC6QXWbR9mR18F1xHjXkMLyc+evIVFlV7Kjoeo1Wn+9k34804GY3D2Pxnt3Yet18DL4eg6u7wcFemSMUGceVnwHMmjO8dQUrBlb5nWjIujBFt6izRnXEr1iM5CkprVbNxVxHMk1lqkFCyYluOOR/bhKEk9Mty6dnfsPo3lkWfGyCYcnh6oIIXglK4sD24dQgh4rKfIwztGyPgOSgrcRiD1aM8YjpSkfcXm3SXW7xgl7Sv8g4IpZS0l5bDTz7Os3IMVEoIAvXcfzDsZrD0QCZqhYdAaKwTSGva6WSIhJxCY1kLKUyQ9CRZeu6ST1Z84Cx0ZvnLlfD76mhM5b14r582bTD3QJByJsXHQc/0rZzGlOUG5HuEo8J34HVJAU8oBLMZYUp7gtvctZ1l3E/XQkEsoEq7CaahHLdS4SpJNOOSSsQ1PeopJWW/C4vdHbhrJXjcT27IGc6wHhw4PhU2xOJ7hCCsYcRJHJDGNtWhj8VzJvZsHackkWNhd4KTOPI/tHGX+tBxZX3H7B1cyfVKSr1w5j6vOnErSc0i6ipuvWsBtf7+Ms05q4R8vnsWPr13Crz+4iu7Jad5/YTc/v24FuUS825+//GRue99yrlgxhcHhKhedOpnvXbOYqc0Jvv/uxXG0aME25nS0MHrESU5cw1jpCLlAEEzIL6uNQ4ujxfRJV7Gtr8QjO0d4x9nTEcDP1vXSkkmQS3lkfIc3r+piwbQCd20coHtyhsuXT+HCU9upBJorVnSxck4z67aPMFwOeNc507nqzJnc+NNN9I7U8V3BnuEKSgreuHIqEbCjv8LS7gJXruoi6Tn0j9Vx1bOn5VXhTnhGHLRWeYwE89iUlIB6ZPjtY/t4+9mz2TlYZqCvTMKT1EPDz9bt5n0XnMjm3WNs7i2ST7rsGanhO4K9IzV+uX432YRL/1hAJdAAlGsh581rpTnjsWhGgfdfdALVQOM5ikTCYf3TI2zoKfL2c7q5bc0uGhH382ANDl/dgVzAnZiQJE14bLLYWjK+w3+s6yXpOty9uZ90xuOHf9xJ73CNrXtLTGl6kl8/tgdtLF/73Tb+8+G9DJYClnY30zcW8O/3PMPWPSWqYcT2vjL/8dAeXr2onZvu3MZ/P7KXsWqE70ieGajgO5J8yuXuTX0sn9XEg1uHSPoK/RzSx6QNJ9I3nns4ADKbmQBnU1Q/JuezP7Xd0V/hQ7duJOUp/JTLD1fvwnMkjhLc+NMNpBMuniP5/H89SSHt8fOH93LLg7tJ+Yr1T4/hKsG67cM0pVwCbfj94/14jiThKf71zu0NAiU2bitmFbhkYQdfvuNJnhmskPYVkX52AApRbWIWmc0ergKypSnm1m1sOSeHxZhSOgpDIYWgXIv4zrsWcdnSKSycnuMn712K78QZYD3UrP7k2ZzYkWHvYJXmjM9YJUSbOP431hJEmkqgqUea6y/q5q1nTENrg6tiD6Fk7H5rgaEaan66bg+XfnUNn/3lk5RqEcVq9CwEikBhaA+LMYnTOE6XLc0HSUDjDaqtDeEnwGgiKekKRkmb8JjsT2Qt86bmuHNDH5W6w8mdOU6bluPSpVPYM1Ij7bt85rK5/GFTP9+7byefef1JTMok+Pe7d3BiR4aFMwrkkg5f/c02OpqSPPL0CG9Y2cUF89u4dW0PJ0/Jc8qULMVaiBCChKu48bZN/P0F3Zx9Uivfvvdp7t8ySNp3xjmJCdZexCzR1GC04dINwvNQ7ZPHozu5HwCnox1RKEAUEQiHrmCMtrBEKNRRVUEC9dAwXA4YrUQMlgIWzyxw+fIu1m4bQgq487F9vPtvujnzpEkMjdZYOauJ95w3k8tXTKUl7bF4ZjMXL2inOR0bvmvP72bGpBQ7B6rccMkJDBbrvO3MmYSh5pKFHVz3ylm89/xZPPLMCN+4eiHZpBNniEc4XwwbjPG0+iiBdBBRhMhnUZ0dhwBgLSqbQU2bAkFApBTNusLJ1X5q0kEeAV0hYmZ3tBpy0WntvGZxJ5VAExlLz1CNP2zsp7MpyXA5ZKgcsmJ2E29YNZ2e4Sq5ZGwX1m4fZsueIilP0jdaI+k7fPiHj3LK1DyXLpnCWDXiD5sGGCgG3LN5gN7hGh0FH7DsHKyQT7p4SowTMBPpbqgLhxOrA7RGJULpQBAip3SimptiVyBEwwY0cmN33snYMMIKiWMNpxd3HvVE11pLyne44ccbmNqcZPmcFv7hh4+yc6DKw9sHac75fPfe7Vyxsot7N/dz813b2bqvRO9wlT9u6Wf9jiEGinU27R5j274Sm3vH2Nw7yrmntrNu2yCrtw6wZms/QWRY/WQf1VCzoWeYn6zZxc8f6uWav+nmI7dtZLAU4qrDuUSBJRKS00s9eFZjpYQgxD1lbkycGH3QuUCDI6uue5jha69HpDP4OuBpv4lXnXAlgXCQHM7PCQG10BBGBiFASYmnBKE2JDxFsRrhqNiQ7efvHCXAxhHlfipLCkHU4PY8RxJGBt04Hk+4iiDSKBnf99w4zhAiJnjzSQdtjx4F/vLJHzG32kfV9bFjRQpf/SKpM1eNH5zK8ZUA/vx5yK4uRFCnplzm1AY5vdhDWblIa47oChOOJN2gtlKeio/hGovNp9xxmsp1JElPUQ8N9ciQ8ByUklQDQ7mu8V2J50jGqiH1yJD0JAlXMVaNqEcxWElfUa5ptImBySYUg6WgQYcdfJxuKEuPZaVdzK32UVEeIgiQHW34CxdwMAciDyLskckE/hkrsJUqyDgRumJoA8LaI6qCBRxH0pT2SHoKbSxdzUlO6syR8hwibThtWoFzTm4l7cWZ2muXdPKqRe0ILElXctnyTl63rAPVsPKXL+/i0iUdSCHwHMllyzq5bGknrhIoIbh0aSevX9ZJwpVIIbhiRRendGXHpeLgc4IrhjbgWo1VElup4q1YjspmDpT0TQiFGzeSl1wEyZg+Kiqfc8aeYkVpFyXljRcqHBxc5hIOk/M+IEh5ioXTC8ztzBJEhklZn0uXdHL23FbKgWbxjAIfuGg2Z540ibFyyPJZTdxw0RwumDeZsXLAytnx/8+f10qxHLKsu8ANF8/hwlMnU6yEnDY9xwcvnsOrFrUzVg5ZPDPPDRfPZsnMJmqhQQqBxFJWHosqvVw4uo2i8lHGgOuSevVFz3I22LAFA9d9kPD+BzC5HPmwwm9zc3jrrNeR0QHmkMjDwjidraQg0nZc15UUBKEhMhbPVTgCKvUIbSGdcJBAuR5hLKR9BykOuZZQrk28rtTi76d8B0dCqRbhKonXiBaVNYyoBN/a8YuYEvfSyFIRZ8kiJt381ViOD1rDEZOhzN+9ESslyhrGlM+Fo9t49fATjDiJ+MjpEClQUiDFAWPnN8RzP4mS9h0ato9UwiWXdMfPF9P7r8URru3h1/u/LwUNIN3xxTvWMOIkuWh0K5eMbGFUJVAYrLGk3/LGhvW3xzgakzKu71u8EP+cM7FjRYRU1KXkY7330BkU47jgWbLFgzXFNjiEg93n8boWjWtr44KJunRoDct8fPfdaBGX3tqxEt6qlSRXrYglXD2H02GsJfved0ImjYhCatJlRn2Yz/X8jrpwjlDj+VcwLFSky6d3/Z4TagNUpIfSEdb3ybzvmqPO93AApARj8WZMJ/WuqzFjYyglGXESvGZkMx/acz+DTgp1BLf4lxqONQw6Kf7Hnge4fGgDw04CR0n06Cipq68kccLso9YKyaOcOoIx5N58Od6ZZ2BHRlFKMawS/MOeP/Lufevod9M41vzFJcGxhj43zdsG/sxH9tzLqPJRSmFHx3CWLyN31VsmuL3nVyQlBNHAAANvew/09WNTSYTWpHTEx6aezzfaltASVcf97l+kSEqleNvAn/nnnb+hJmVcKVarQT5P83e/gdfRfsxKsedUJlff9ARD774OEUVYz0NoTcYEfLn9DL7U8Qp8G5Ew0ctaJleXDhXpcv2eB/jwnnupSAcrHUQUYqyl6ev/m+RpC15EmdwhhZKVtQ8xcv2HkYD1vEahZI1fNJ3MR7vOY4+XpSmqYV/qQklrGXGStIZlPr3r91w+tIHR/YWSYYiJNPkvfZb0WauOQ6HkodWiax5i5IYbEUEdUil0pCnoGjv8Zj7beTa/ajoJiSWjg/FT2uMx4gjUUlI+GsFFo1v5+O67mVMbYFglUI6Eag0jFfnPf5L0WWccx1LZQ4ulN25i5EOfwPb2Noql4ypR1xp+kz+Br7Ut4+F0VxzUmPA4FEtLKtLDCFhc2sO1fWu5ZOSJxn0XV0nM6Bhi8iTyn/8UyYULXoJi6UPL5fv6GPnUFwjvfwCZz2KVi9WanK5Tkw535Wdza/N81mSmMuQkURh8E+FaM76bR1u6FoJISGrCQTdqfpaVd/OGwQ2cP7aVtA4YVQlQCqUj9OgYzoqlFD7xUbwpHS9hufwhhtFYS/E7P6TynR9AuYzI7m+YiMg2coYtiVbuzc7ggew0Nidb6XfSVKSLPoqxVNaQtCGtYYWTqv2cXurhzLEdzK3149g4OdPKicPbYgn8BMm/exO5d74V2ehSeWkbJg6NdYWgvvUpijd/i+C+1XHTUzqFVnFZStKEJExIKBwGnBQ9Xp4eP8deJ8uwk6QmHSyQPKhlZmp9lKnBKK1RGddqasKhqjyskihj4pYZa/FWrSTznneQmHviBLf9vEv3jkfTlAWqD6yl/OPbCB9aj6gHiGQibpoSEmEMronwjMax+qi5hEEQCUUgFeH+pilrEEGArVSxnou7aCHpN70+ZnUOmsMLrjJ90W1zB3V3WqD+6Eaqd/yW+gNrMb17QEdx25zrYR0n7jc62k412uaEjiAI4rY5qZAd7Xgrl5G6+EL8RQtiU/pX0TZ3FCAAomKJ4NENBOvWEzy+CbOrFzs6iq0H4yTsEfMQ30PmcsgpnXinzMVbuhhv4XycXO6AqP9VNU4eCQjLhLTTNOoP9J59RPv2YQaHxltnRSOwUtkMsqUZ2T4Zp70d1dI80WnuB+04t86Kl6x7/ODm6ReqozqOIZD/PzVPPxdAnq2i+mVsn/9/nqqsWG9wzq8AAAAASUVORK5CYII=" alt="MINVU">
+    <div class="lock-title">MINVU · Dashboard 2026</div>
+    <div class="lock-sub">Redes Sociales · Acceso restringido</div>
+    <label class="lock-label">Clave de acceso</label>
+    <input class="lock-input" type="password" id="lockInput"
+      placeholder="••••••••••" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')checkLock()">
+    <button class="lock-btn" onclick="checkLock()">Ingresar →</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
+
 <div class="shell">
 
 <!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
@@ -738,18 +810,13 @@ table.dt tbody tr:hover td { background: #fafbfc; }
     <div id="gmEfemeride" style="display:none;background:#fef3c7;border-radius:7px;padding:8px 10px;font-size:12px;color:#78350f;margin-bottom:10px;border-left:3px solid #f59e0b;"></div>
     <div class="gm-section">Efeméride / Nota del día</div>
     <textarea class="gm-textarea" id="gmEfTxt" placeholder="Efeméride o recordatorio del día (editable)..." rows="2"></textarea>
-    <div class="gm-section">Publicación programada</div>
-    <select class="gm-select" id="gmRed" style="margin-bottom:8px">
-      <option value="">— Seleccionar red social —</option>
-      <option value="ig">Instagram</option>
-      <option value="fb">Facebook</option>
-      <option value="tt">TikTok</option>
-      <option value="x">X</option>
-      <option value="general">Todas / General</option>
-    </select>
-    <textarea class="gm-textarea" id="gmPubTxt" placeholder="Descripción de la publicación. Ej: Reel — Entrega viviendas Talca..." rows="3"></textarea>
+    <div class="gm-section" style="display:flex;align-items:center;justify-content:space-between;">
+      Publicaciones programadas
+      <button onclick="addPubRow()" style="background:var(--acc-bg);border:1px solid var(--border2);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;cursor:pointer;">+ Agregar</button>
+    </div>
+    <div id="gmPubsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px;"></div>
     <div class="gm-actions">
-      <button class="gm-delete" id="gmDeleteBtn">🗑 Eliminar entradas</button>
+      <button class="gm-delete" id="gmDeleteBtn">🗑 Eliminar todo</button>
       <div style="display:flex;gap:8px">
         <button class="btn btn-g" id="gmCancelBtn">Cancelar</button>
         <button class="btn btn-p" id="gmSaveBtn">Guardar</button>
@@ -905,6 +972,20 @@ function mergeSaved(saved) {
   if (saved.__goals) base.__goals = saved.__goals;
   else base.__goals = JSON.parse(JSON.stringify(DEFAULT_GOALS));
   return base;
+}
+
+// Migrate old single-pub entries to pubs array format
+function migrateGrillaEntry(entry) {
+  if (!entry) return entry;
+  if (entry.pubs === undefined) {
+    // Old format: {ef, red, pub} → new format: {ef, pubs:[{red,txt}]}
+    entry.pubs = (entry.pub && entry.pub.trim())
+      ? [{ red: entry.red || 'general', txt: entry.pub }]
+      : [];
+    delete entry.pub;
+    delete entry.red;
+  }
+  return entry;
 }
 
 async function loadData() {
@@ -1184,13 +1265,14 @@ function renderNet(nid) {
         <span class="kc-lbl">${kpi.label}</span>
         <div class="kc-ico" style="background:${cfg.color}18;color:${cfg.color}">${cfg.icon}</div>
       </div>
-      <div class="kc-val">${fmt(c, kpi.fmt)}</div>
+      <div class="kc-val" data-count="${c !== null ? c : ''}" data-fmt="${kpi.fmt}">${fmt(c, kpi.fmt)}</div>
       <div class="kc-meta">
         ${vtxt ? `<span class="kc-badge ${vcls}">${vtxt}</span>` : ''}
         <span class="kc-period">${li >= 0 ? MONTHS[li] : 'Sin datos'}</span>
       </div>`;
     krowEl.appendChild(card);
   });
+  requestAnimationFrame(() => runCountersIn(krowEl));
 
   // 2. Charts (evolución mensual)
   const chartsEl = document.getElementById(nid + '-charts');
@@ -1420,6 +1502,38 @@ window.addEventListener('beforeunload', e => {
 });
 
 // ─── DASHBOARD RENDERER ───────────────────────────────────────
+
+// ─── COUNTER ANIMATION ────────────────────────────────────────
+function animateCounter(el, targetVal, fmt_type, duration) {
+  if (!el || targetVal === null || targetVal === undefined) return;
+  if (typeof targetVal !== 'number') { el.textContent = targetVal; return; }
+  duration = duration || 700;
+  const startTime = performance.now();
+  const startVal  = 0;
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease-out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = startVal + (targetVal - startVal) * ease;
+    el.textContent = fmt(current, fmt_type);
+    el.classList.add('count-anim');
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = fmt(targetVal, fmt_type);
+  }
+  requestAnimationFrame(step);
+}
+
+// Animate all elements with data-count attribute in a container
+function runCountersIn(containerEl) {
+  if (!containerEl) return;
+  containerEl.querySelectorAll('[data-count]').forEach(el => {
+    const raw  = parseFloat(el.dataset.count);
+    const fmtT = el.dataset.fmt || 'num';
+    if (!isNaN(raw)) animateCounter(el, raw, fmtT, 750);
+  });
+}
+
 function renderDash() {
   const mi = parseInt(document.getElementById('dashMonth').value);
   const pi = mi > 0 ? mi - 1 : null;
@@ -1450,7 +1564,7 @@ function renderDashCards(mi, pi) {
       const vtxt = v === null ? '—' : `${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%`;
       kHtml += `<div>
         <div class="dkpi-lbl">${kpi.label}</div>
-        <div class="dkpi-val">${fmt(c, kpi.fmt)}</div>
+        <div class="dkpi-val" data-count="${c !== null ? c : ''}" data-fmt="${kpi.fmt}">${fmt(c, kpi.fmt)}</div>
         <div class="dkpi-chg ${vcls}">${vtxt}</div>
       </div>`;
     });
@@ -1464,6 +1578,7 @@ function renderDashCards(mi, pi) {
       <div class="dnc-kpis">${kHtml}</div>`;
     el.appendChild(card);
   }
+  requestAnimationFrame(() => runCountersIn(el));
 }
 
 function renderTrends() {
@@ -1671,14 +1786,14 @@ function renderSmartMetrics(mi, pi) {
     },
   ];
 
-  cards.forEach(c => {
+  cards.forEach((c, _i) => {
     const div = document.createElement('div');
     div.className = 'smart-card';
     div.innerHTML = `
       <div class="smart-icon ${c.cls}">${c.icon}</div>
       <div>
         <div class="smart-label">${c.label}</div>
-        <div class="smart-value">${c.value}</div>
+        <div class="smart-value count-anim" style="animation-delay:${['0ms','120ms','240ms'][_i]||'0ms'}">${c.value}</div>
         <div class="smart-sub">${c.sub}</div>
       </div>`;
     el.appendChild(div);
@@ -1708,7 +1823,7 @@ function renderTotals() {
       <div class="total-card-label">
         <span style="font-weight:700">${icon}</span> ${label}
       </div>
-      <div class="total-card-value">${fmt(total)}</div>
+      <div class="total-card-value" data-count="${total !== null ? total : ''}" data-fmt="num">${fmt(total)}</div>
       <div class="total-card-sub">
         ${v !== null
           ? `${v > 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}% · ${li >= 0 ? MONTHS[li] : ''}`
@@ -1716,6 +1831,7 @@ function renderTotals() {
       </div>`;
     el.appendChild(card);
   });
+  requestAnimationFrame(() => runCountersIn(el));
 }
 
 // ─── ALERTS PANEL ─────────────────────────────────────────────
@@ -1959,8 +2075,9 @@ function grillaLoadFromStorage() {
       grillaData = parsed;
       // Ensure seed efemerides that haven't been edited are shown
       for (const [date, ef] of Object.entries(EFEMERIDES_SEED)) {
-        if (!grillaData[date]) grillaData[date] = { ef, red:'', pub:'' };
+        if (!grillaData[date]) grillaData[date] = { ef, pubs:[] };
         else if (grillaData[date].ef === undefined) grillaData[date].ef = ef;
+        migrateGrillaEntry(grillaData[date]);
       }
       return;
     }
@@ -1968,7 +2085,7 @@ function grillaLoadFromStorage() {
   // Init from seed
   grillaData = {};
   for (const [date, ef] of Object.entries(EFEMERIDES_SEED)) {
-    grillaData[date] = { ef, red:'', pub:'' };
+    grillaData[date] = { ef, pubs:[] };
   }
 }
 
@@ -1992,8 +2109,9 @@ async function grillaLoadFromCloud() {
       grillaData = data.payload;
       // Ensure seed efemerides not overwritten
       for (const [date, ef] of Object.entries(EFEMERIDES_SEED)) {
-        if (!grillaData[date]) grillaData[date] = { ef, red:'', pub:'' };
+        if (!grillaData[date]) grillaData[date] = { ef, pubs:[] };
         else if (grillaData[date].ef === undefined) grillaData[date].ef = ef;
+        migrateGrillaEntry(grillaData[date]);
       }
       try { localStorage.setItem(GRILLA_SK, JSON.stringify(grillaData)); } catch(e) {}
       return;
@@ -2067,12 +2185,13 @@ function renderGrilla() {
       const shortEf = entry.ef.length > 40 ? entry.ef.slice(0,38)+'…' : entry.ef;
       eventsHtml += `<div class="cal-event efemeride" title="${entry.ef}">📅 ${shortEf}</div>`;
     }
-    if (entry.pub) {
-      const redCls = entry.red || 'general';
+    const pubs = entry.pubs || (entry.pub ? [{ red: entry.red||'general', txt: entry.pub }] : []);
+    pubs.forEach(p => {
+      const redCls = p.red || 'general';
       const redIcon = {ig:'📸',fb:'👥',tt:'🎵',x:'✕',general:'📢'}[redCls] || '📢';
-      const shortPub = entry.pub.length > 40 ? entry.pub.slice(0,38)+'…' : entry.pub;
-      eventsHtml += `<div class="cal-event publicacion ${redCls}" title="${entry.pub}">${redIcon} ${shortPub}</div>`;
-    }
+      const shortPub = (p.txt||'').length > 38 ? (p.txt||'').slice(0,36)+'…' : (p.txt||'');
+      eventsHtml += `<div class="cal-event publicacion ${redCls}" title="${p.txt||''}">${redIcon} ${shortPub}</div>`;
+    });
     eventsHtml += `<div class="cal-add-btn" onclick="openGrillaModal('${dateStr}')">＋ Agregar</div>`;
     eventsHtml += '</div>';
 
@@ -2108,11 +2227,37 @@ function openGrillaModal(dateStr) {
   }
 
   const entry = grillaData[dateStr] || {};
-  document.getElementById('gmEfTxt').value  = entry.ef || '';
-  document.getElementById('gmRed').value    = entry.red || '';
-  document.getElementById('gmPubTxt').value = entry.pub || '';
+  document.getElementById('gmEfTxt').value = entry.ef || '';
+
+  // Populate pubs list
+  const list = document.getElementById('gmPubsList');
+  list.innerHTML = '';
+  const pubs = entry.pubs || (entry.pub ? [{ red: entry.red||'general', txt: entry.pub }] : []);
+  if (pubs.length === 0) {
+    addPubRow();  // Start with one empty row
+  } else {
+    pubs.forEach(p => addPubRow(p.red, p.txt));
+  }
 
   document.getElementById('grillaModalOverlay').classList.add('open');
+}
+
+function addPubRow(red='', txt='') {
+  const list = document.getElementById('gmPubsList');
+  const row = document.createElement('div');
+  row.className = 'gm-pub-row';
+  row.innerHTML = `
+    <select class="gm-select" style="width:130px;flex-shrink:0;padding:6px 8px;font-size:12px;">
+      <option value="">— Red —</option>
+      <option value="ig"${red==='ig'?' selected':''}>Instagram</option>
+      <option value="fb"${red==='fb'?' selected':''}>Facebook</option>
+      <option value="tt"${red==='tt'?' selected':''}>TikTok</option>
+      <option value="x"${red==='x'?' selected':''}>X</option>
+      <option value="general"${red==='general'||red===''?' selected':''}>General</option>
+    </select>
+    <textarea class="gm-textarea" placeholder="Descripción del post. Ej: Reel — Entrega viviendas..." rows="2" style="font-size:12px;">${txt}</textarea>
+    <button class="gm-pub-remove" onclick="this.closest('.gm-pub-row').remove()" title="Quitar esta publicación">✕</button>`;
+  list.appendChild(row);
 }
 
 function closeGrillaModal() {
@@ -2127,18 +2272,28 @@ document.getElementById('grillaModalOverlay').addEventListener('click', function
 
 document.getElementById('gmSaveBtn').addEventListener('click', async () => {
   if (!grillaEditingDate) return;
-  const ef  = document.getElementById('gmEfTxt').value.trim();
-  const red = document.getElementById('gmRed').value;
-  const pub = document.getElementById('gmPubTxt').value.trim();
+  const ef = document.getElementById('gmEfTxt').value.trim();
 
-  if (!ef && !pub) {
+  // Collect all pub rows
+  const pubs = [];
+  document.querySelectorAll('#gmPubsList .gm-pub-row').forEach(row => {
+    const red = row.querySelector('select').value || 'general';
+    const txt = row.querySelector('textarea').value.trim();
+    if (txt) pubs.push({ red, txt });
+  });
+
+  if (!ef && pubs.length === 0) {
     delete grillaData[grillaEditingDate];
-    // Restore seed efemeride if it exists
     if (EFEMERIDES_SEED[grillaEditingDate]) {
-      grillaData[grillaEditingDate] = { ef: EFEMERIDES_SEED[grillaEditingDate], red:'', pub:'' };
+      grillaData[grillaEditingDate] = { ef: EFEMERIDES_SEED[grillaEditingDate], pubs:[] };
     }
   } else {
-    grillaData[grillaEditingDate] = { ef, red, pub };
+    if (!grillaData[grillaEditingDate]) grillaData[grillaEditingDate] = {};
+    grillaData[grillaEditingDate].ef   = ef;
+    grillaData[grillaEditingDate].pubs = pubs;
+    // Remove old format fields if present
+    delete grillaData[grillaEditingDate].pub;
+    delete grillaData[grillaEditingDate].red;
   }
 
   await grillaSave();
@@ -2152,7 +2307,7 @@ document.getElementById('gmDeleteBtn').addEventListener('click', async () => {
   delete grillaData[grillaEditingDate];
   // Restore seed efemeride if it exists
   if (EFEMERIDES_SEED[grillaEditingDate]) {
-    grillaData[grillaEditingDate] = { ef: EFEMERIDES_SEED[grillaEditingDate], red:'', pub:'' };
+    grillaData[grillaEditingDate] = { ef: EFEMERIDES_SEED[grillaEditingDate], pubs:[] };
   }
   await grillaSave();
   closeGrillaModal();
@@ -2979,6 +3134,45 @@ async function exportPPTX(nid) {
   } catch(err) {
     console.error('PPTX error:', err);
     toast(`⚠ Error PPTX: ${err.message}`, 'err');
+  }
+}
+
+
+// ─── PASSWORD LOCK ────────────────────────────────────────────
+(function() {
+  const PASS = 'Serrano.15';
+  const SESSION_KEY = 'minvu_unlocked_2026';
+  // If already unlocked this session, skip
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    const el = document.getElementById('lockOverlay');
+    if (el) el.style.display = 'none';
+  }
+  // Focus input on load
+  window.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('lockInput');
+    if (inp && document.getElementById('lockOverlay')?.style.display !== 'none') {
+      inp.focus();
+    }
+  });
+})();
+
+function checkLock() {
+  const val = document.getElementById('lockInput').value;
+  const err = document.getElementById('lockError');
+  if (val === 'Serrano.15') {
+    sessionStorage.setItem('minvu_unlocked_2026', '1');
+    const overlay = document.getElementById('lockOverlay');
+    overlay.style.transition = 'opacity .4s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => { overlay.style.display = 'none'; }, 400);
+    err.textContent = '';
+  } else {
+    err.textContent = '⚠ Clave incorrecta. Intenta nuevamente.';
+    // Shake animation re-trigger
+    err.style.animation = 'none';
+    requestAnimationFrame(() => { err.style.animation = 'shake .3s ease'; });
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockInput').focus();
   }
 }
 
